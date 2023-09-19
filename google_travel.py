@@ -2,6 +2,8 @@ import base64
 import re
 import requests
 import pymysql
+import datetime
+import pytz
 import time
 from config import DatabaseConfig
 from bs4 import BeautifulSoup
@@ -15,10 +17,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from fake_useragent import UserAgent
 
-# connection = pymysql.connect(**DatabaseConfig().db_config)
-# cursor = connection.cursor()
+connection = pymysql.connect(**DatabaseConfig().db_config)
+cursor = connection.cursor()
 
 def crawl_hotel(hotel_name, checkin_date, checkout_date):
+    current_utc_time = datetime.datetime.utcnow()
+    crawl_time_utc_8 = current_utc_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Asia/Taipei'))
     chrome_options = Options()
     # chrome_options.add_experimental_option("detach", True) # 不自動關閉瀏覽器
     chrome_options.add_argument(f'user-agent={UserAgent().random}')
@@ -53,16 +57,22 @@ def crawl_hotel(hotel_name, checkin_date, checkout_date):
     prices_button.click()
 
     soup = BeautifulSoup(chrome_driver.page_source, 'lxml')
+    hotel_complete_name = soup.find("h1", {"class":"FNkAEc o4k8l"}).text.replace("\n", " ")
     listings = soup.find_all("div",{"class":"zIL9xf xIAdxb"})
     result_list = []
     for listing in listings:
-        title = listing.select("span.NiGhzc")[0].text.replace("\n", " ")
-        price = listing.select("span.MW1oTb")[0].text.strip('$')
-        result_list.append((title,price))
-    print(list(set(result_list)))
+        agency = listing.select("span.NiGhzc")[0].text.replace("\n", " ")
+        price = listing.select("span.MW1oTb")[0].text.strip('$').replace(',', '')
+        # checkin_date = 
+        result_list.append((hotel_complete_name, checkin_date, checkout_date, agency, int(price), crawl_time_utc_8))
+    return result_list
 
-crawl_hotel("APA酒店〈京成上野車站前","2023/9/26","2023/10/1")
-crawl_hotel("上野御徙町相鐵FRESA INN","2023/9/30","2023/10/3")
 
-# sql_insert_history_price = "INSERT INTO history_price (hotel_name, agency, twd_price, time) VALUES (%s,%s,%s,%s)"
-# cursor.execute(sql_insert_history_price, )
+result1 = crawl_hotel("APA酒店〈京成上野車站前","2023-09-26","2023-10-01")
+result2 = crawl_hotel("上野御徙町相鐵FRESA INN","2023-10-01","2023-10-03")
+
+sql_insert_history_price = """
+    INSERT INTO history (hotel_name, checkin_date, checkout_date, agency, twd_price, crawl_time) 
+    VALUES (%s,%s,%s,%s,%s,%s)"""
+cursor.executemany(sql_insert_history_price, result1)
+cursor.executemany(sql_insert_history_price, result2)
