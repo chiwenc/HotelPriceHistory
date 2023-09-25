@@ -25,13 +25,16 @@ def query_tracking_request(ti):
     ti.xcom_push(key="tracking_request", value=get_tracking_request())
 
 def get_single_hotel_crawling_result(ti):
-    requests = ti.xcom_pull(task_ids='query_request')
+    requests = ti.xcom_pull(task_ids='query_request',key="tracking_request")
+    result_list = []
     for request in requests:
-        ti.xcom_push(key="single_crawlingresult", value=crawl_single_hotel(*request))
+        result = crawl_single_hotel(*request)
+        result_list.append(result)
+    ti.xcom_push(key="crawling_result", value=result_list)
     
 def insert_single_hotel_crawling_to_db(ti):
-    value = ti.xcom_pull(task_ids='crawl_data')
-    insert_single_history_to_db(value)
+    result_list = ti.xcom_pull(task_ids='crawl_data', key="crawling_result")
+    insert_single_history_to_db(result_list)
 
 with DAG(
     "xcom_dag",
