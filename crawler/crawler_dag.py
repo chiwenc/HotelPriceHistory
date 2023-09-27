@@ -3,7 +3,7 @@ from airflow.decorators import dag, task
 from airflow.models import XCom
 from airflow.operators.python import PythonOperator
 from datetime import datetime
-from google_travel import get_tracking_request, crawl_single_hotel, insert_single_history_to_db
+from google_travel import get_tracking_request, crawl_single_hotel, insert_single_history_to_db, crawl_all_hotels_from_region
 
 
 # 定义默认参数
@@ -21,6 +21,8 @@ default_args = {
 #           )
 # @dag(schedule="@daily", default_args=default_args, catchup=False, schedule_interval=None,)
 
+region_list = ["東京","大阪"]
+
 def query_tracking_request(ti):
     ti.xcom_push(key="tracking_request", value=get_tracking_request())
 
@@ -31,9 +33,20 @@ def get_single_hotel_crawling_result(ti):
         result = crawl_single_hotel(*request)
         result_list.append(result)
     ti.xcom_push(key="crawling_result", value=result_list)
-    
+
+def get_all_hotels_crawling_result(ti):
+    result_list = []
+    for region in region_list:
+        result = crawl_all_hotels_from_region(region)
+        result_list.append(result)
+    ti.xcom_push(key="all_crawling_result", value=result_list)
+
 def insert_single_hotel_crawling_to_db(ti):
-    result_list = ti.xcom_pull(task_ids='crawl_data', key="crawling_result")
+    result_list = ti.xcom_pull(task_ids='crawl_single_data', key="crawling_result")
+    insert_single_history_to_db(result_list)
+
+def insert_all_hotels_crawling_to_db(ti):
+    result_list = ti.xcom_pull(task_ids='crawl_all_data', key="crawling_result")
     insert_single_history_to_db(result_list)
 
 with DAG(
@@ -49,7 +62,7 @@ with DAG(
     )
     
     crawl_single_data = PythonOperator(
-        task_id="crawl_data", python_callable=get_single_hotel_crawling_result
+        task_id="crawl_single_data", python_callable=get_single_hotel_crawling_result
     )
 
     insert_crawling_data_to_db = PythonOperator(
