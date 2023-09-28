@@ -192,7 +192,6 @@ class Crawler(threading.Thread):
 
 if __name__ == "__main__":
     single_history_set = set()
-    all_history_set = set()
     crawler_queue = queue.Queue()
     user_requests = get_tracking_request()
     for user_request in user_requests:
@@ -213,6 +212,7 @@ if __name__ == "__main__":
         crawlers_list[i].join()
     single_history_list = list(single_history_set)
     insert_single_history_to_db(single_history_list)
+    all_history_set = set()
     # crawl_all_hotels_from_region("東京")
     # print(all_history_set)
     # all_history_list = list(all_history_set)
