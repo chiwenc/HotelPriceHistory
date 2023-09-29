@@ -19,7 +19,8 @@ def get_tracking_request():
     connection = pymysql.connect(**DatabaseConfig().db_config)
     cursor = connection.cursor()
     sql_get_tracking_request = """
-        SELECT hotel_name, checkin_date, checkout_date FROM history
+        SELECT hotel_name, checkin_date, checkout_date FROM user_request
+        WHERE checkin_date >= DATE(CONVERT_TZ(NOW(), 'UTC', '+8:00'))
         GROUP BY hotel_name, checkin_date, checkout_date """
     cursor.execute(sql_get_tracking_request)
     result = cursor.fetchall()
@@ -213,41 +214,34 @@ class Crawler(threading.Thread):
 
 
 if __name__ == "__main__":
-    # single_history_set = set()
-    # crawler_queue = queue.Queue()
-    # user_requests = get_tracking_request()
-    # for user_request in user_requests:
-    #     crawl_single_hotel(*user_request)
-    # for user_request in user_requests:
-    #     crawler_queue.put(user_request)
+    single_history_set = set()
+    crawler_queue = queue.Queue()
+    user_requests = get_tracking_request()
+    for user_request in user_requests:
+        crawl_single_hotel(*user_request)
+    for user_request in user_requests:
+        crawler_queue.put(user_request)
     
-    # crawlers_list = []
-    # crawler_count = 5 
-    # for i in range(crawler_count):
-    #     crawler = Crawler(i+1)
-    #     crawlers_list.append(crawler)
+    crawlers_list = []
+    crawler_count = 5 
+    for i in range(crawler_count):
+        crawler = Crawler(i+1)
+        crawlers_list.append(crawler)
     
-    # for crawler in crawlers_list:
-    #     crawler.start()
+    for crawler in crawlers_list:
+        crawler.start()
     
-    # for i in range(crawler_count):
-    #     crawlers_list[i].join()
-    # single_history_list = list(single_history_set)
-    # insert_single_history_to_db(single_history_list)
+    for i in range(crawler_count):
+        crawlers_list[i].join()
+    single_history_list = list(single_history_set)
+    insert_single_history_to_db(single_history_list)
+    print("finish crawling single history")
     all_history_set = set()
     crawl_all_hotels_from_region("東京")
     crawl_all_hotels_from_region("大阪")
     # print(all_history_set)
     all_history_list = list(all_history_set)
-    # insert_all_history_to_db(all_history_list)
-    
 
-    # result1 = crawl_single_hotel("APA酒店〈京成上野車站前","2023-09-26","2023-10-01")
-    # result2 = crawl_single_hotel("上野御徙町相鐵FRESA INN","2023-10-01","2023-10-03")
-    # print(result1)
-    # print(result2)
-    # result = crawl_all_hotels_from_region("東京")
-    # print(result)
 
                                           
 
