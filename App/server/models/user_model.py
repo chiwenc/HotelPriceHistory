@@ -2,8 +2,12 @@ import pymysql, sys
 sys.path.append("/Users/chiwen/Documents/github/personal project/App/server")
 from config import DatabaseConfig
 from flask_bcrypt import Bcrypt
+from flask_login import UserMixin, login_manager
 
 con = pymysql.connect(**DatabaseConfig().db_config)
+
+class User(UserMixin):
+    pass
 
 def check_email_exist(email):
     with con.cursor() as cursor:
@@ -23,12 +27,13 @@ def insert_user_value(name, email, password):
         con.commit()
         return "Successfully registered!"
 
+
 def get_user_id(email):
     with con.cursor() as cursor:
         SQL_get_user_id = "SELECT id FROM user_info WHERE email = %s"
         cursor.execute(SQL_get_user_id, (email,))
         user_id = cursor.fetchone()
-        return user_id
+        return user_id["id"]
 
 def verify_user(email, password):   
     with con.cursor() as cursor:
@@ -60,4 +65,4 @@ def get_user_request(user_id):
         result = cursor.fetchall()
         return result
 
-print(get_user_request(2))
+

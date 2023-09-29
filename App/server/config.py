@@ -25,4 +25,8 @@ class FlaskConfig:
         self.SECRET_KEY = "flaskverysecretkey"
         self.JWT_SECRET_KEY = "jwtverysecretkey"
         self.WTF_CSRF_EXEMPT_LIST = ['localhost', '127.0.0.1']
+        # self.JWT_TOKEN_LOCATION = "cookies"
+        # self.JWT_ACCESS_COOKIE_PATH = "/api/"
+        # self.JWT_COOKIE_CSRF_PROTECT = False
+
 
