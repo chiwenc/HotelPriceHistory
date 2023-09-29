@@ -1,6 +1,7 @@
+import pymysql, sys
+sys.path.append("/Users/chiwen/Documents/github/personal project/App/server")
 from config import DatabaseConfig
 from flask_bcrypt import Bcrypt
-import pymysql
 
 con = pymysql.connect(**DatabaseConfig().db_config)
 
@@ -43,3 +44,20 @@ def verify_user(email, password):
             return "Matched."
         else:
             return "Wrong password."
+
+def insert_user_request(user_id, hotel_name, checkin_date, checkout_date):
+    with con.cursor() as cursor:
+        SQL_insert_user_request = """
+            INSERT INTO user_request (user_id, hotel_name, checkin_date, checkout_date)
+            VALUES (%s,%s,%s,%s)"""
+        cursor.execute(SQL_insert_user_request, (user_id, hotel_name, checkin_date, checkout_date))
+        con.commit()
+
+def get_user_request(user_id):
+    with con.cursor() as cursor:
+        SQL_get_user_request = "SELECT hotel_name, checkin_date, checkout_date FROM user_request WHERE user_id = %s"
+        cursor.execute(SQL_get_user_request, (user_id,))
+        result = cursor.fetchall()
+        return result
+
+print(get_user_request(2))

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>酒店追蹤需求</title>
+</head>
+<body>
+    <h1>酒店追蹤需求</h1>
+    <form action="{{url_for('user_request')}}", method="post">
+        <label for="hotel_name">酒店名稱:</label>
+        <input type="text" name="hotel_name" required><br><br>
+
+        <label for="checkin_date">入住日期:</label>
+        <input type="date" name="checkin_date" required><br><br>
+
+        <label for="checkout_date">退房日期:</label>
+        <input type="date" name="checkout_date" required><br><br>
+
+        <input type="submit" value="提交">
+    </form>
+
+    <h2>已追蹤的需求:</h2>
+    <ul>
+        {% for booking in bookings %}
+            <li>{{ booking.hotel_name }} - 入住日期: {{ booking.checkin_date }}, 退房日期: {{ booking.checkout_date }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

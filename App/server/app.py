@@ -1,11 +1,11 @@
-import requests, json, datetime, sys
+import json, datetime, sys
 sys.path.append("..")
 
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
 from config import FlaskConfig
-from models.user_model import check_email_exist, insert_user_value, get_user_id, verify_user
-
+from models.user_model import check_email_exist, insert_user_value, get_user_id, verify_user, insert_user_request, get_user_request
+# from dash_dashboard import dash_app
 
 app = Flask(__name__)
 app.config.from_object(FlaskConfig())
@@ -85,8 +85,26 @@ def profile():
     }
     return jsonify(response_data)
 
+@app.route('/api/v1/user/user_request', methods=['GET','POST'])
+def user_request():
+    if request.method == 'POST':
+        user_id = 2
+        hotel_name = request.form['hotel_name']
+        checkin_date = request.form['checkin_date']
+        checkout_date = request.form['checkout_date']
+        # print(user_id, hotel_name, checkin_date, checkout_date)
+        # insert_user_request(user_id, hotel_name, checkin_date, checkout_date)
 
-@app.route('/dashboard') 
+        user_request_data = get_user_request(user_id)
+
+
+    return render_template("user_request.html", bookings=user_request_data)
+
+@app.route('/dash_dashboard')
+def dash_dashboard():
+    return dash_app.index()
+
+@app.route('/superset_dashboard') 
 def superset_dashboard():
     return render_template('superset_dashboard.html')
 
