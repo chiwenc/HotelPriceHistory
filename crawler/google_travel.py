@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from fake_useragent import UserAgent
 
@@ -18,7 +19,8 @@ def get_tracking_request():
     connection = pymysql.connect(**DatabaseConfig().db_config)
     cursor = connection.cursor()
     sql_get_tracking_request = """
-        SELECT hotel_name, checkin_date, checkout_date FROM history
+        SELECT hotel_name, checkin_date, checkout_date FROM user_request
+        WHERE checkin_date >= DATE(CONVERT_TZ(NOW(), 'UTC', '+8:00'))
         GROUP BY hotel_name, checkin_date, checkout_date """
     cursor.execute(sql_get_tracking_request)
     result = cursor.fetchall()
@@ -75,8 +77,8 @@ def crawl_all_hotels_from_region(region):
     current_utc_time = datetime.datetime.utcnow()
     crawl_time_utc_8 = current_utc_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Asia/Taipei'))
     chrome_options = Options()
-    # chrome_options.add_argument("--headless=new")
-    chrome_options.add_experimental_option("detach", True) # 不自動關閉瀏覽器
+    chrome_options.add_argument("--headless=new")
+    # chrome_options.add_experimental_option("detach", True) # 不自動關閉瀏覽器
     chrome_options.add_argument(f'user-agent={UserAgent().random}')
     chrome_options.add_argument('blink-settings=imagesEnabled=false')
     chrome_service = Service()
@@ -86,11 +88,33 @@ def crawl_all_hotels_from_region(region):
     chrome_driver.get(url)
     # chrome_driver.maximize_window()
     total_click_change_page = 1
+    reset_click_count = 0
     click_max = 100
     # result_list = []
-    # next_page_button = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[@class='VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-UbuQg VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 my6Xrf wJjnG dA7Fcf tEQgl']")))
-    # print(next_page_button)
-    while total_click_change_page <= click_max:
+    # next_page_button = WebDriverWait(chrome_driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//button[@class='VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-UbuQg VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 my6Xrf wJjnG dA7Fcf tEQgl']")))
+    while True: 
+        try:
+            # reset_button = WebDriverWait(chrome_driver, 5).until(
+            #     EC.element_to_be_clickable((By.XPATH, "//button[@class='VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 my6Xrf wJjnG dA7Fcf Pn8YIe undefined']"))
+            # )
+            reset_button = chrome_driver.find_element(By.XPATH, "//button[@class='VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 my6Xrf wJjnG dA7Fcf Pn8YIe undefined']")
+            if reset_button.is_displayed():
+                if reset_click_count <= 3: 
+                    reset_button.click()
+                    time.sleep(5)
+                    reset_click_count += 1
+                    print("click reset")
+                    total_click_change_page = 1
+                    continue
+                else:
+                    print("click >3 reset button, shut the cralwer。")
+                    break
+        except NoSuchElementException:
+            pass
+        except Exception as e:
+            print(f"error: {e}")
+            break
+        
         try:
             next_page_button = WebDriverWait(chrome_driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//button[@class='VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-UbuQg VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 my6Xrf wJjnG dA7Fcf tEQgl']")))
             soup = BeautifulSoup(chrome_driver.page_source, 'lxml')
@@ -129,11 +153,10 @@ def insert_single_history_to_db(single_history_list):
 def insert_all_history_to_db(all_history_list):
     cursor = connection.cursor()
     sql_insert_all_hotels = """
-        INSERT INTO all_history (region, hotel_name, twd_price, crawl_time)
+        INSERT IGNORE INTO all_history (region, hotel_name, twd_price, crawl_time)
         VALUES (%s,%s,%s,%s)"""
     cursor.executemany(sql_insert_all_hotels ,all_history_list)
     connection.commit()
-
 
 
 class Crawler(threading.Thread):
@@ -212,19 +235,13 @@ if __name__ == "__main__":
         crawlers_list[i].join()
     single_history_list = list(single_history_set)
     insert_single_history_to_db(single_history_list)
+    print("finish crawling single history")
     all_history_set = set()
-    # crawl_all_hotels_from_region("東京")
+    crawl_all_hotels_from_region("東京")
+    crawl_all_hotels_from_region("大阪")
     # print(all_history_set)
-    # all_history_list = list(all_history_set)
-    # insert_all_history_to_db(all_history_list)
-    
+    all_history_list = list(all_history_set)
 
-    # result1 = crawl_single_hotel("APA酒店〈京成上野車站前","2023-09-26","2023-10-01")
-    # result2 = crawl_single_hotel("上野御徙町相鐵FRESA INN","2023-10-01","2023-10-03")
-    # print(result1)
-    # print(result2)
-    # result = crawl_all_hotels_from_region("東京")
-    # print(result)
 
                                           
 
