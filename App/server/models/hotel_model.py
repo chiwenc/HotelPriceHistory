@@ -14,4 +14,12 @@ def get_request_hotel_history_price(hotel_name, checkin_date, checkout_date):
         result = cursor.fetchall()
         return result
 
+def get_price_from_all_history(hotel_name):
+    with con.cursor() as cursor:
+        cursor.execute("SELECT hotel_name, twd_price, crawl_time FROM all_history WHERE hotel_name = %s", (hotel_name,))
+        result = cursor.fetchall() 
+        return result
+
 # print(get_request_hotel_history_price("APA酒店〈京成上野車站前〉", "2023-09-26", "2023-10-01"))
+
+# print(get_price_from_all_history("APA Hotel Machida-Eki Higashi"))

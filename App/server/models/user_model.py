@@ -28,12 +28,12 @@ def insert_user_value(name, email, password):
         return "Successfully registered!"
 
 
-def get_user_id(email):
+def get_user_info(email):
     with con.cursor() as cursor:
-        SQL_get_user_id = "SELECT id FROM user_info WHERE email = %s"
+        SQL_get_user_id = "SELECT id, name FROM user_info WHERE email = %s"
         cursor.execute(SQL_get_user_id, (email,))
         user_id = cursor.fetchone()
-        return user_id["id"]
+        return user_id
 
 def verify_user(email, password):   
     with con.cursor() as cursor:
@@ -60,9 +60,23 @@ def insert_user_request(user_id, hotel_name, checkin_date, checkout_date):
 
 def get_user_request(user_id):
     with con.cursor() as cursor:
-        SQL_get_user_request = "SELECT hotel_name, checkin_date, checkout_date FROM user_request WHERE user_id = %s"
+        SQL_get_user_request = "SELECT id, hotel_name, checkin_date, checkout_date FROM user_request WHERE user_id = %s"
         cursor.execute(SQL_get_user_request, (user_id,))
         result = cursor.fetchall()
         return result
 
+def delete_user_request(request_id):
+    with con.cursor() as cursor:
+        cursor.execute("DELETE FROM user_request WHERE id = %s", (request_id,))
+        con.commit()
 
+def get_tracking_request():
+    connection = pymysql.connect(**DatabaseConfig().db_config)
+    cursor = connection.cursor()
+    sql_get_tracking_request = """
+        SELECT hotel_name, checkin_date, checkout_date FROM user_request
+        GROUP BY hotel_name, checkin_date, checkout_date """
+    cursor.execute(sql_get_tracking_request)
+    result = cursor.fetchall()
+    result_list = [tuple(item.values()) for item in result]
+    return result_list
