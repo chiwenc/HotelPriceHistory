@@ -1,37 +1,53 @@
 from dash import Dash, dcc, html, Input, Output, callback
-from models.hotel_model import get_request_hotel_history_price
+from models.hotel_model import get_request_hotel_history_price, get_price_from_all_history
 from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objects as go
-
+import requests
 import pandas as pd
+import json
 
 
-app = Dash(__name__)
+dash_app = Dash(__name__)
 
 data = get_request_hotel_history_price("APA酒店〈京成上野車站前〉", "2023-09-26", "2023-10-01")
+# data = requests.get("http://127.0.0.1:5000/hotel_history_price").json()
+
+all_data = get_price_from_all_history("APA Hotel Machida-Eki Higashi")
 
 df = pd.DataFrame(data)
+all_df = pd.DataFrame(all_data)
 hotel_name = 'APA酒店〈京成上野車站前〉'
 
 unique_agencies = df['agency'].unique()
-app.layout = html.Div([
+dash_app.layout = html.Div([
     dcc.Dropdown(
         id='agency-dropdown',
         options=[{'label': agency, 'value': agency} for agency in unique_agencies],
         multi=True,
     ),
     dcc.Graph(id='price-trend-graph'),
-    dcc.DatePickerSingle(
+    html.Div(id='data-card'),
+    html.Div([  # 包装左侧图表和指示器
+        dcc.DatePickerSingle(
         id='date-picker-single',
         date=df['crawl_time'].min().date(),
         display_format='YYYY-MM-DD',
         style={'margin-bottom': '20px'}
-    ),
-    html.Div(id='data-card'),
-    dcc.Graph(id='cheapest-indicator'),
-    dcc.Graph(id='price-bar-chart')
+        ),
+        dcc.Graph(id='cheapest-indicator'),
+        dcc.Graph(id='price-bar-chart'),
+    ], style={'display': 'flex'}),  # 使用flex布局使它们水平排列
+    dcc.Input(id='hotel-input', type='text', placeholder='输入酒店名称'),
+    html.Div([
+        dcc.Graph(id='all-time-cheapest-indicator'),
+        dcc.Graph(id='all-time-high-price-indicator'),
+        dcc.Graph(id='all-price-trend')
+    ], style={'display': 'flex'}) # 右侧图表使用 49% 的宽度
 ])
+
+
+
 @callback(
     Output('price-trend-graph', 'figure'),
     Input('agency-dropdown', 'value')
@@ -123,5 +139,75 @@ def cheapest_indicator(selected_date):
     return fig
 
 
+@callback(
+    Output('all-price-trend', 'figure'),
+    Input('hotel-input', 'value')
+)
+def all_history_price_graph(selected_hotel):
+    if selected_hotel is None:
+        
+        selected_hotel = all_df['hotel_name'].iloc[0]
+
+    filtered_data = all_df[all_df['hotel_name'] == selected_hotel]
+
+    line_fig = px.line(filtered_data, x='crawl_time', y='twd_price', color='hotel_name', markers=True,
+                    title=f'"{hotel_name}" 價格走勢圖')
+    
+    return line_fig
+
+@callback(
+    Output('all-time-cheapest-indicator', 'figure'),
+    Input('hotel-input', 'value')
+)
+def all_time_cheapest_indicator(selected_hotel):
+    if selected_hotel is None:
+
+        selected_hotel = all_df['hotel_name'].iloc[0]
+
+    filtered_data = all_df[all_df['hotel_name'] == selected_hotel]
+    min_price_row = filtered_data[filtered_data['twd_price'] == filtered_data['twd_price'].min()]
+    
+    if not min_price_row.empty:
+        min_price = min_price_row.iloc[0]['twd_price']
+        crawl_time = min_price_row.iloc[0]['crawl_time']
+    
+    fig = {
+        'data': [go.Indicator(
+            mode = "number",
+            value = min_price,
+            title = {"text": f"History Low Price:<br><span style='font-size:0.8em;color:gray'>{crawl_time}</span><br><span style='font-size:0.8em;color:gray'>Subsubtitle</span>"},
+            # domain = {'x': [0.6, 1], 'y': [0, 1]},
+        )],
+    }
+ 
+    return fig
+
+@callback(
+    Output('all-time-high-price-indicator', 'figure'),
+    Input('hotel-input', 'value')
+)
+def all_time_high_price_indicator(selected_hotel):
+    if selected_hotel is None:
+
+        selected_hotel = all_df['hotel_name'].iloc[0]
+
+    filtered_data = all_df[all_df['hotel_name'] == selected_hotel]
+    max_price_row = filtered_data[filtered_data['twd_price'] == filtered_data['twd_price'].max()]
+    
+    if not max_price_row.empty:
+        max_price = max_price_row.iloc[0]['twd_price']
+        crawl_time = max_price_row.iloc[0]['crawl_time']
+    
+    fig = {
+        'data': [go.Indicator(
+            mode = "number",
+            value = max_price,
+            title = {"text": f"History High Price:<br><span style='font-size:0.8em;color:gray'>{crawl_time}</span><br><span style='font-size:0.8em;color:gray'>Subsubtitle</span>"},
+            # domain = {'x': [0.6, 1], 'y': [0, 1]},
+        )],
+    }
+ 
+    return fig
+
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    dash_app.run_server(debug=True)
