@@ -1,8 +1,8 @@
 import pymysql
 
 from App import login_manager
-from flask_login import UserMixin
-from config import DatabaseConfig
+from flask_login import UserMixin, current_user
+from App.config import DatabaseConfig
 
 con = pymysql.connect(**DatabaseConfig().db_config)
 
@@ -25,3 +25,4 @@ def load_user(email):
     user.id = str(user_info["id"])
     user.name = user_info["name"]
     return user
+

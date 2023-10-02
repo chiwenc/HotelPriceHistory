@@ -5,9 +5,8 @@ import os
 from flask_login import LoginManager
 
 load_dotenv()
-
 login_manager = LoginManager()
-login_manager.login_view = 'signin'
+login_manager.login_view = 'auth.signin'
 
 def create_app():
     app = Flask(__name__)
