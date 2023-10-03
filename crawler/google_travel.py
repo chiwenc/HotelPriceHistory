@@ -28,50 +28,53 @@ def get_tracking_request():
     return result_list
 
 def crawl_single_hotel(hotel_name, checkin_date, checkout_date):
-    current_utc_time = datetime.datetime.utcnow()
-    crawl_time_utc_8 = current_utc_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Asia/Taipei'))
-    chrome_options = Options()
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--headless=new")
-    # chrome_options.add_experimental_option("detach", True) # 不自動關閉瀏覽器
-    chrome_options.add_argument(f'user-agent={UserAgent().random}')
-    chrome_options.add_argument('blink-settings=imagesEnabled=false') # 不要載圖片
-    # chrome_service = Service(ChromeDriverManager().install())
-    chrome_service = Service()
-    chrome_driver = webdriver.Chrome(service=chrome_service, options=chrome_options) # 開啟瀏覽器視窗(Chrome)
-    url = "https://www.google.com/travel/search"
-    chrome_driver.get(url)
-    # chrome_driver.maximize_window()
+    try:
+        current_utc_time = datetime.datetime.utcnow()
+        crawl_time_utc_8 = current_utc_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Asia/Taipei'))
+        chrome_options = Options()
+        # chrome_options.add_argument("--headless=new")
+        # chrome_options.add_experimental_option("detach", True) # 不自動關閉瀏覽器
+        chrome_options.add_argument(f'user-agent={UserAgent().random}')
+        chrome_options.add_argument('blink-settings=imagesEnabled=false') # 不要載圖片
+        # chrome_service = Service(ChromeDriverManager().install())
+        chrome_service = Service()
+        chrome_driver = webdriver.Chrome(service=chrome_service, options=chrome_options) # 開啟瀏覽器視窗(Chrome)
+        url = "https://www.google.com/travel/search"
+        chrome_driver.get(url)
+        # chrome_driver.maximize_window()
 
-    checkin = chrome_driver.find_element(By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="登機報到頁面"]')
-    # checkin = WebDriverWait(chrome_driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="登機報到頁面"]')))
-    chrome_driver.execute_script(f"arguments[0].value = '{checkin_date}';", checkin)
-    checkin.send_keys(Keys.ENTER)
-    time.sleep(3)
+        checkin = chrome_driver.find_element(By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="登機報到頁面"]')
+        # checkin = WebDriverWait(chrome_driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="登機報到頁面"]')))
+        chrome_driver.execute_script(f"arguments[0].value = '{checkin_date}';", checkin)
+        checkin.send_keys(Keys.ENTER)
+        time.sleep(3)
 
-    checkout = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="退房"]')))
-    chrome_driver.implicitly_wait(10)
-    chrome_driver.execute_script(f"arguments[0].value = '{checkout_date}';", checkout)
-    checkout.send_keys(Keys.ENTER)
-    time.sleep(3)
-    search_box = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="搜尋地點、飯店和其他旅遊內容"]')))
-    chrome_driver.execute_script(f"arguments[0].value = '{hotel_name}';", search_box)
-    search_box.click()
-    first_option = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//ul[@role='listbox']/li[1]")))
-    first_option.click()
-    prices_button = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.ID,"prices")))
-    prices_button.click()
+        checkout = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="退房"]')))
+        chrome_driver.implicitly_wait(10)
+        chrome_driver.execute_script(f"arguments[0].value = '{checkout_date}';", checkout)
+        checkout.send_keys(Keys.ENTER)
+        time.sleep(3)
+        search_box = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="搜尋地點、飯店和其他旅遊內容"]')))
+        chrome_driver.execute_script(f"arguments[0].value = '{hotel_name}';", search_box)
+        search_box.click()
+        first_option = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//ul[@role='listbox']/li[1]")))
+        first_option.click()
+        prices_button = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.ID,"prices")))
+        prices_button.click()
 
-    soup = BeautifulSoup(chrome_driver.page_source, 'lxml')
-    hotel_complete_name = soup.find("h1", {"class":"FNkAEc o4k8l"}).text.replace("\n", " ")
-    listings = soup.find_all("div",{"class":"zIL9xf xIAdxb"})
-    result_list = []
-    for listing in listings:
-        agency = listing.select("span.NiGhzc")[0].text.replace("\n", " ")
-        price = listing.select("span.MW1oTb")[0].text.strip('$').replace(',', '')
-        result_list.append((hotel_complete_name, checkin_date, checkout_date, agency, int(price), crawl_time_utc_8))
-    chrome_driver.quit()
-    return list(set(result_list))
+        soup = BeautifulSoup(chrome_driver.page_source, 'lxml')
+        hotel_complete_name = soup.find("h1", {"class":"FNkAEc o4k8l"}).text.replace("\n", " ")
+        listings = soup.find_all("div",{"class":"zIL9xf xIAdxb"})
+        for listing in listings:
+            agency = listing.select("span.NiGhzc")[0].text.replace("\n", " ")
+            price = listing.select("span.MW1oTb")[0].text.strip('$').replace(',', '')
+            single_history_set.add((hotel_complete_name, checkin_date, checkout_date, agency, int(price), crawl_time_utc_8))
+        chrome_driver.quit()
+    
+    except Exception as e:
+            print(f"error: {e}")
+            pass
+    
 
 def crawl_all_hotels_from_region(region):
     current_utc_time = datetime.datetime.utcnow()
@@ -170,69 +173,75 @@ class Crawler(threading.Thread):
             self.crawl_single_hotel(*user_request)
     
     def crawl_single_hotel(self, hotel_name, checkin_date, checkout_date):
-        current_utc_time = datetime.datetime.utcnow()
-        crawl_time_utc_8 = current_utc_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Asia/Taipei'))
-        chrome_options = Options()
-        chrome_options.add_argument("--headless=new")
-        # chrome_options.add_experimental_option("detach", True) # 不自動關閉瀏覽器
-        chrome_options.add_argument(f'user-agent={UserAgent().random}')
-        chrome_options.add_argument('blink-settings=imagesEnabled=false') # 不要載圖片
-        # chrome_service = Service(ChromeDriverManager().install())
-        chrome_service = Service()
-        chrome_driver = webdriver.Chrome(service=chrome_service, options=chrome_options) # 開啟瀏覽器視窗(Chrome)
-        url = "https://www.google.com/travel/search"
-        chrome_driver.get(url)
-        # chrome_driver.maximize_window()
+        try:
+            current_utc_time = datetime.datetime.utcnow()
+            crawl_time_utc_8 = current_utc_time.replace(tzinfo=pytz.utc).astimezone(pytz.timezone('Asia/Taipei'))
+            chrome_options = Options()
+            # chrome_options.add_argument("--headless=new")
+            # chrome_options.add_experimental_option("detach", True) # 不自動關閉瀏覽器
+            chrome_options.add_argument(f'user-agent={UserAgent().random}')
+            chrome_options.add_argument('blink-settings=imagesEnabled=false') # 不要載圖片
+            # chrome_service = Service(ChromeDriverManager().install())
+            chrome_service = Service()
+            chrome_driver = webdriver.Chrome(service=chrome_service, options=chrome_options) # 開啟瀏覽器視窗(Chrome)
+            url = "https://www.google.com/travel/search"
+            chrome_driver.get(url)
+            # chrome_driver.maximize_window()
 
-        checkin = chrome_driver.find_element(By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="登機報到頁面"]')
-        # checkin = WebDriverWait(chrome_driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="登機報到頁面"]')))
-        chrome_driver.execute_script(f"arguments[0].value = '{checkin_date}';", checkin)
-        checkin.send_keys(Keys.ENTER)
-        time.sleep(3)
+            checkin = chrome_driver.find_element(By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="登機報到頁面"]')
+            # checkin = WebDriverWait(chrome_driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="登機報到頁面"]')))
+            chrome_driver.execute_script(f"arguments[0].value = '{checkin_date}';", checkin)
+            checkin.send_keys(Keys.ENTER)
+            time.sleep(3)
 
-        checkout = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="退房"]')))
-        chrome_driver.implicitly_wait(10)
-        chrome_driver.execute_script(f"arguments[0].value = '{checkout_date}';", checkout)
-        checkout.send_keys(Keys.ENTER)
-        time.sleep(3)
-        search_box = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="搜尋地點、飯店和其他旅遊內容"]')))
-        chrome_driver.execute_script(f"arguments[0].value = '{hotel_name}';", search_box)
-        search_box.click()
-        first_option = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//ul[@role='listbox']/li[1]")))
-        first_option.click()
-        prices_button = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.ID,"prices")))
-        prices_button.click()
+            checkout = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="退房"]')))
+            chrome_driver.implicitly_wait(10)
+            chrome_driver.execute_script(f"arguments[0].value = '{checkout_date}';", checkout)
+            checkout.send_keys(Keys.ENTER)
+            time.sleep(3)
+            search_box = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR,'input[jsname="yrriRe"][aria-label="搜尋地點、飯店和其他旅遊內容"]')))
+            chrome_driver.execute_script(f"arguments[0].value = '{hotel_name}';", search_box)
+            search_box.click()
+            first_option = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//ul[@role='listbox']/li[1]")))
+            first_option.click()
+            prices_button = WebDriverWait(chrome_driver, 10).until(EC.element_to_be_clickable((By.ID,"prices")))
+            prices_button.click()
 
-        soup = BeautifulSoup(chrome_driver.page_source, 'lxml')
-        hotel_complete_name = soup.find("h1", {"class":"FNkAEc o4k8l"}).text.replace("\n", " ")
-        listings = soup.find_all("div",{"class":"zIL9xf xIAdxb"})
-        for listing in listings:
-            agency = listing.select("span.NiGhzc")[0].text.replace("\n", " ")
-            price = listing.select("span.MW1oTb")[0].text.strip('$').replace(',', '')
-            single_history_set.add((hotel_complete_name, checkin_date, checkout_date, agency, int(price), crawl_time_utc_8))
-        chrome_driver.quit()
+            soup = BeautifulSoup(chrome_driver.page_source, 'lxml')
+            hotel_complete_name = soup.find("h1", {"class":"FNkAEc o4k8l"}).text.replace("\n", " ")
+            listings = soup.find_all("div",{"class":"zIL9xf xIAdxb"})
+            for listing in listings:
+                agency = listing.select("span.NiGhzc")[0].text.replace("\n", " ")
+                price = listing.select("span.MW1oTb")[0].text.strip('$').replace(',', '')
+                single_history_set.add((hotel_complete_name, checkin_date, checkout_date, agency, int(price), crawl_time_utc_8))
+            chrome_driver.quit()
+        
+        except Exception as e:
+            print(f"error: {e}")
+            pass
 
 
 if __name__ == "__main__":
     single_history_set = set()
-    crawler_queue = queue.Queue()
+    # crawler_queue = queue.Queue()
     user_requests = get_tracking_request()
     for user_request in user_requests:
+        print(user_request)
         crawl_single_hotel(*user_request)
-    for user_request in user_requests:
-        crawler_queue.put(user_request)
+    # for user_request in user_requests:
+    #     crawler_queue.put(user_request)
     
-    crawlers_list = []
-    crawler_count = 5 
-    for i in range(crawler_count):
-        crawler = Crawler(i+1)
-        crawlers_list.append(crawler)
+    # crawlers_list = []
+    # crawler_count = 5 
+    # for i in range(crawler_count):
+    #     crawler = Crawler(i+1)
+    #     crawlers_list.append(crawler)
     
-    for crawler in crawlers_list:
-        crawler.start()
+    # for crawler in crawlers_list:
+    #     crawler.start()
     
-    for i in range(crawler_count):
-        crawlers_list[i].join()
+    # for i in range(crawler_count):
+    #     crawlers_list[i].join()
     single_history_list = list(single_history_set)
     insert_single_history_to_db(single_history_list)
     print("finish crawling single history")
@@ -241,6 +250,8 @@ if __name__ == "__main__":
     crawl_all_hotels_from_region("大阪")
     # print(all_history_set)
     all_history_list = list(all_history_set)
+    insert_all_history_to_db(all_history_list)
+
 
 
                                           
