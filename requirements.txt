@@ -1,4 +1,9 @@
-apache-airflow==2.7.0
+aiohttp==3.8.5
+aiosignal==1.3.1
+alembic==1.12.0
+annotated-types==0.5.0
+anyio==4.0.0
+apache-airflow==2.7.1
 apache-airflow-providers-common-sql==1.7.2
 apache-airflow-providers-ftp==3.5.2
 apache-airflow-providers-http==4.5.2
@@ -11,13 +16,18 @@ async-timeout==4.0.3
 attrs==23.1.0
 Babel==2.12.1
 backoff==2.2.1
+bcrypt==4.0.1
 beautifulsoup4==4.12.2
 blinker==1.6.2
+Bottleneck @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_07078715-3ab7-4562-8d3d-d56b0eaa0f7dp504n_ny/croots/recipe/bottleneck_1657175566567/work
+Brotli @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_38mvgltu8c/croots/recipe/brotli-split_1659616064542/work
 bs4==0.0.1
 cachelib==0.9.0
 cattrs==23.1.2
 certifi==2023.7.22
+cffi @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_ab19r4bji3/croot/cffi_1670423206034/work
 charset-normalizer==3.2.0
+click @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_croot-quwchbn8/click_1646123324461/work
 clickclick==20.10.2
 colorama==0.4.6
 colorlog==4.8.0
@@ -25,6 +35,9 @@ ConfigUpdater==3.1.1
 connexion==2.14.2
 cron-descriptor==1.4.0
 croniter==1.4.1
+cryptography @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_905z2r5rpq/croot/cryptography_1694211573866/work
+dash @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_2fp3_4lclp/croot/dash_1669049650927/work
+dash-bootstrap-components @ file:///home/conda/feedstock_root/build_artifacts/dash-bootstrap-components_1694086999250/work
 Deprecated==1.2.14
 dill==0.3.7
 dnspython==2.4.2
@@ -32,6 +45,18 @@ docutils==0.20.1
 email-validator==1.3.1
 exceptiongroup==1.1.3
 fake-useragent==1.2.1
+Flask @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_9ctftfb254/croot/flask_1671217361609/work
+Flask-AppBuilder==4.3.6
+Flask-Babel==2.0.0
+Flask-Bcrypt==1.0.1
+Flask-Caching==2.0.2
+Flask-Compress @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_74z7t4j6hd/croot/flask-compress_1668714948486/work
+Flask-JWT-Extended==4.5.2
+Flask-Limiter==3.5.0
+Flask-Login==0.6.2
+Flask-Session==0.5.0
+Flask-SQLAlchemy==2.5.1
+Flask-WTF==1.1.1
 frozenlist==1.4.0
 google-re2==1.1
 googleapis-common-protos==1.60.0
@@ -45,43 +70,65 @@ idna==3.4
 importlib-metadata==6.8.0
 importlib-resources==6.1.0
 inflection==0.5.1
+itsdangerous @ file:///tmp/build/80754af9/itsdangerous_1621432558163/work
+Jinja2 @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_9fjgzv9ant/croot/jinja2_1666908141308/work
 jsonschema==4.19.1
 jsonschema-specifications==2023.7.1
 lazy-object-proxy==1.9.0
 limits==3.6.0
 linkify-it-py==2.0.2
 lockfile==0.12.2
+lxml @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_bbjv2ox7t8/croot/lxml_1679646469466/work
 Mako==1.2.4
 Markdown==3.4.4
 markdown-it-py==3.0.0
+MarkupSafe @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_12c133f5-0720-4727-9c18-599a3af825723lzwham3/croots/recipe/markupsafe_1654597866058/work
 marshmallow==3.20.1
 marshmallow-oneofschema==3.0.1
 marshmallow-sqlalchemy==0.26.1
 mdit-py-plugins==0.4.0
 mdurl==0.1.2
 multidict==6.0.4
+numexpr @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_76yyu1p9jk/croot/numexpr_1683221830860/work
+numpy @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_362zs5g963/croot/numpy_and_numpy_base_1695830450707/work/dist/numpy-1.26.0-cp310-cp310-macosx_11_0_arm64.whl#sha256=241678002b22c060cc5680abb413af33efab2fa2324d102e6babd0ef756a06cb
+oauthlib==3.2.2
+opentelemetry-api==1.20.0
+opentelemetry-exporter-otlp==1.20.0
+opentelemetry-exporter-otlp-proto-common==1.20.0
+opentelemetry-exporter-otlp-proto-grpc==1.20.0
+opentelemetry-exporter-otlp-proto-http==1.20.0
+opentelemetry-proto==1.20.0
+opentelemetry-sdk==1.20.0
+opentelemetry-semantic-conventions==0.41b0
 ordered-set==4.1.0
 outcome==1.2.0
 packaging==23.1
+pandas @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_b9nb2vqtpu/croot/pandas_1692289331806/work
 pathspec==0.11.2
 pendulum==2.1.2
+plotly==5.17.0
 pluggy==1.3.0
 prison==0.2.1
 protobuf==4.24.3
 psutil==5.9.5
+pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
+pydantic==2.3.0
+pydantic_core==2.6.3
 Pygments==2.16.1
 PyJWT==2.8.0
-PyMySQL==1.0.2
+PyMySQL @ file:///Users/ktietz/ci_310/pymysql_1643974420902/work
+PySocks @ file:///Users/ktietz/ci_310/pysocks_1643961536721/work
 python-daemon==3.0.1
-python-dateutil==2.8.2
+python-dateutil @ file:///tmp/build/80754af9/python-dateutil_1626374649649/work
 python-dotenv==1.0.0
 python-nvd3==0.15.0
 python-slugify==8.0.1
-pytz==2022.7
+pytz @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_c56ru3yml9/croot/pytz_1671697451306/work
 pytzdata==2020.1
 PyYAML==6.0.1
 referencing==0.30.2
 requests==2.31.0
+requests-oauthlib==1.3.1
 requests-toolbelt==1.0.0
 rfc3339-validator==0.1.4
 rich==13.5.3
@@ -89,7 +136,7 @@ rich-argparse==1.3.0
 rpds-py==0.10.3
 selenium==4.12.0
 setproctitle==1.3.2
-six==1.16.0
+six @ file:///tmp/build/80754af9/six_1644875935023/work
 sniffio==1.3.0
 sortedcontainers==2.4.0
 soupsieve==2.5
@@ -97,16 +144,20 @@ SQLAlchemy==1.4.49
 SQLAlchemy-JSONField==1.0.1.post0
 SQLAlchemy-Utils==0.41.1
 sqlparse==0.4.4
+superset-api-client==0.6.0
 tabulate==0.9.0
-tenacity==8.2.3
+tenacity @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_0ew5sfng29/croot/tenacity_1682972282256/work
 termcolor==2.3.0
 text-unidecode==1.3
 trio==0.22.2
 trio-websocket==0.10.4
 typing_extensions==4.8.0
+tzdata @ file:///croot/python-tzdata_1690578112552/work
 uc-micro-py==1.0.2
 unicodecsv==0.14.1
+urllib3 @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_f56r2ox7qh/croot/urllib3_1688592651265/work
 webdriver-manager==4.0.0
+Werkzeug @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_fc9kcczuwd/croot/werkzeug_1679489745296/work
 wrapt==1.15.0
 wsproto==1.2.0
 WTForms==3.0.1
