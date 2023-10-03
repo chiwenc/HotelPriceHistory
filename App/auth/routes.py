@@ -5,8 +5,6 @@ from App.server.models.hotel_model import get_request_hotel_history_price, get_h
 from App.auth import bp
 from App.models import User
 from flask_login import UserMixin
-import pandas as pd
-
 
 class User(UserMixin):
     pass
@@ -111,9 +109,7 @@ def get_dashboard_df():
 def get_dashboard_all_df():
     user_id = current_user.id
     all_data = get_hotel_all_history_price(user_id)
-    # all_df = pd.DataFrame(all_data)
     return all_data
-
 
 @bp.route('/logout')
 @login_required

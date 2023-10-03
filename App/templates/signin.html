@@ -30,6 +30,9 @@
                             <label for="password">Password:</label>
                             <input type="password" id="password" name="password" class="form-control" required>
                         </div>
+                        <div class="text-center mb-3">
+                            <p>還未註冊？ <a href="{{ url_for('auth.signup') }}">點擊註冊</a></p>
+                        </div>
 
                         <button type="submit" class="btn btn-primary btn-block">Sign In</button>
                     </form>

@@ -6,21 +6,12 @@ from App.models import User
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-import requests, json
 
 def create_dashboard(server):
     dash_app = Dash(
         server=server,
         routes_pathname_prefix='/dashapp/'
     )
-    # data = get_request_hotel_history_price(2)
-    # # data = get_request_hotel_history_price("APA酒店〈京成上野車站前〉", "2023-09-26", "2023-10-01")
-    # all_data = get_price_from_all_history("APA Hotel Machida-Eki Higashi")
-    # df = pd.DataFrame(data)
-    # all_df = pd.DataFrame(all_data)
-    # hotel_name = 'APA酒店〈京成上野車站前〉'
-    # unique_agencies = df['agency'].unique()
-
 
     # dash_app.layout = html.Div([
     #     dcc.Dropdown(
@@ -46,22 +37,6 @@ def create_dashboard(server):
 
     dash_app.layout = html.Div(
         children=[
-            html.Div(
-                [
-                    html.Div(
-                        [
-                            html.H1(id="my-header", className="text-center"),
-                        ],
-                        className="col-md-12",
-                    )
-                ],
-                className="row",
-            ),
-            # dcc.Dropdown(
-            #     id='agency-dropdown',
-            #     options=[{'label': agency, 'value': agency} for agency in unique_agencies],
-            #     multi=True,
-            # ),
             html.Div(id="my-div", className="text-center"),
             html.Button(
                 id="submit-button-state",
@@ -73,7 +48,6 @@ def create_dashboard(server):
     )
     @dash_app.callback(
         [
-            Output(component_id="my-header", component_property="children"),
             Output(component_id="my-div", component_property="children"),
             Output(component_id="submit-button-state", component_property="style"),
         ],
@@ -81,40 +55,160 @@ def create_dashboard(server):
     )
     def get_user_name(n_clicks):
         if get_user().is_authenticated:
-            welcome_msg = "Welcome back, " + get_user().name
             user_data = load_data()
             link_style = {"display": "none"}
-            return welcome_msg, user_data, link_style
+            return user_data, link_style
         return "not login", ""
     def load_data():
-        # hotel_name = 'APA酒店〈京成上野車站前〉'
+
         data = get_dashboard_df()
-        all_data = get_dashboard_all_df()
         df = pd.DataFrame(data)
-        print(df)
-        # filtered_df = df[(df['hotel_name'] == 'APA酒店〈京成上野車站前〉')]
+        
+        unique_agencies = df['agency'].unique()
+        unique_hotels = df['hotel_name'].unique()
+        default_hotel = unique_hotels[0]
+        default_single_df = df[(df['hotel_name'] == unique_hotels[0])]
+        
+        default_date = df['crawl_time'].max().date()
+        filtered_df = df[df['crawl_time'].dt.date == datetime.strptime(str(default_date), '%Y-%m-%d').date()]
+        sorted_df = filtered_df.sort_values(by='twd_price', ascending=False)
+        min_price_row = filtered_df[(filtered_df['twd_price'] == filtered_df['twd_price'].min())]
+        selected_date_yesterday = default_date - timedelta(days=1)
+        filtered_yesterday_df = df[df['crawl_time'].dt.date == selected_date_yesterday]
+        min_price_row_yesterday = filtered_yesterday_df[filtered_yesterday_df['twd_price'] == filtered_yesterday_df['twd_price'].min()]
+        if not min_price_row.empty:
+            agency = min_price_row.iloc[0]['agency']
+            min_price = min_price_row.iloc[0]['twd_price']
+        else:
+            return None
+        
+        if not min_price_row_yesterday.empty:
+            yesterday_min_price = min_price_row_yesterday.iloc[0]['twd_price']
+            print(yesterday_min_price)
+        else:
+            return None
+
+        all_data = get_dashboard_all_df()
         all_df = pd.DataFrame(all_data)
-        all_history_price_graph = html.Div([
-            dcc.Graph(id='price-trend-graph', 
-                      figure= px.line(df, x='crawl_time', y='twd_price', color='agency', markers=True,
-                        title=f'價格走勢圖')),
-            html.H1("價格走勢圖"),
+        
+        draw_graph = html.Div([
+            html.H1(f"Note: Dashboard 預設呈現飯店「{default_hotel}」截至 {default_date} 的比價資訊"),
+            html.H2("最新比價"),
+            # html.Div([
+            #     html.Label(f'選擇日期，預設為今日 {default_date}')
+            # ]),
+            # html.Div([
+            #     dcc.DatePickerSingle(
+            #         id='date-picker-single',
+            #         date=default_date,
+            #         display_format='YYYY-MM-DD',
+            #     )
+            # ]),
+            html.Div([
+                dcc.Graph(
+                    id='cheapest-price',
+                    figure={
+                        'data': [go.Indicator(
+                            mode="number+delta",
+                            value=min_price,
+                            title={"text": f"Today's cheapest:<br><span style='font-size:0.8em;color:gray'>{agency}</span><br>"},
+                            delta={'reference': yesterday_min_price, 'relative': False, 'valueformat':'f'},
+                            number = {'valueformat':'f'}
+                        )],
+                    }
+                )
+            ],style={'width': '30%', 'display': 'inline-block', 'float': 'left'}),
+            html.Div([
+                dcc.Graph(
+                    id='price-bar-chart',
+                    figure=px.bar(
+                        sorted_df,
+                        x='twd_price',
+                        y='agency',
+                        text='twd_price',
+                        orientation='h',
+                        labels={'twd_price': 'Price in TWD'},
+                        height=400
+                    )
+                )
+            ], style={'width': '70%', 'display': 'inline-block', 'float': 'right'}),
+            html.Div(style={'clear': 'both'}),
+            html.Div([
+                html.H2("各訂房網站價格趨勢比較"),
+                html.Label(f'選擇飯店(單選)，預設為{default_hotel}'),
+                dcc.Dropdown(
+                    id='hotel-dropdown',
+                    options=[{'label': hotel, 'value': hotel} for hotel in unique_hotels],
+                    value=default_hotel
+                ),
+                html.Br(),
+                html.Label(f'選擇訂房網站(可複選)，預設全選'),
+                dcc.Dropdown(
+                    id='agency-dropdown',
+                    options=[{'label': agency, 'value': agency} for agency in unique_agencies],
+                    multi=True,
+                ),
+                dcc.Graph(
+                    id='price-trend-graph', 
+                    figure= px.line(
+                    default_single_df, x='crawl_time', y='twd_price', color='agency', markers=True)
+                )
+            ]),
+            html.H2(f"追蹤飯店歷史價格"),
+            # dcc.Dropdown(
+            #     id='multi-hotel-dropdown',
+            #     options=[{'label': hotel, 'value': hotel} for hotel in unique_hotels],
+            #     value=default_hotel,
+            #     multi=True,
+            # ),
             dcc.Graph(
                 id = 'price-trend', 
-                figure=px.line(all_df, x='crawl_time', y='twd_price', color='hotel_name', markers=True,
-                    title=f'價格走勢圖'))
+                figure=px.line(all_df, x='crawl_time', y='twd_price', color='hotel_name', markers=True)
+            )
         ])
+        return draw_graph
 
-        return all_history_price_graph
+    @dash_app.callback(
+        Output('price-trend-graph', 'figure'),
+        Input('hotel-dropdown', 'value'),
+        Input('agency-dropdown', 'value')
+    )
+    def update_price_trend_graph(selected_hotel, selected_agencies):
+        data = get_dashboard_df()
+        df = pd.DataFrame(data)
+        unique_hotels = df['hotel_name'].unique()
+        default_hotel = unique_hotels[0]
 
-
-
-
+        if selected_agencies is None or selected_agencies == [] or selected_hotel is None or selected_hotel == []:
+            
+            filtered_df = df[(df['hotel_name'] == default_hotel)]
+            line_fig = px.line(filtered_df, x='crawl_time', y='twd_price', color='agency', markers=True,
+                        title=f'{default_hotel}')
+        else:
+            filtered_df = df[(df['hotel_name'] == selected_hotel) & (df['agency'].isin(selected_agencies))]
+            line_fig = px.line(filtered_df, x='crawl_time', y='twd_price', color='agency', markers=True,
+                        title=f'{selected_hotel}')
+        return line_fig
+    # @dash_app.callback(
+    #     Output('price-trend', 'figure'),
+    #     Input('multi-hotel-dropdown', 'value')
+    # )
+    # def update_all_history_price_graph(selected_hotel):
         
+    #     all_data = get_dashboard_all_df()
+    #     all_df = pd.DataFrame(all_data)
+        
+    #     if selected_hotel is None:
+    #         selected_hotel = all_df['hotel_name'].iloc[0]
 
+    #     filtered_data = all_df[all_df['hotel_name'] == selected_hotel]
 
+    #     line_fig = px.line(filtered_data, x='crawl_time', y='twd_price', color='hotel_name', markers=True,
+    #                     title=f'價格走勢圖')
 
-
+    #     return line_fig
+    return dash_app.server
+    
     # @dash_app.callback(
     #     Output('price-trend-graph', 'figure'),
     #     Input('agency-dropdown', 'value')
@@ -277,5 +371,3 @@ def create_dashboard(server):
     #     }
     
     #     return fig
-    
-    return dash_app.server

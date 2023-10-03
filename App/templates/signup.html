@@ -21,7 +21,7 @@
                     {% endif %}
                     {% endwith %}
                     
-                    <form action="{{ url_for('signup') }}" method="post">
+                    <form action="{{ url_for('auth.signup') }}" method="post">
                         <div class="form-group">
                             <label for="name">Name:</label>
                             <input type="text" id="name" name="name" class="form-control" required>
@@ -35,7 +35,7 @@
                             <input type="password" id="password" name="password" class="form-control" required>
                         </div>
                         <div class="text-center mb-3">
-                            <p>已經註冊？ <a href="{{ url_for('signin') }}">點擊登入</a></p>
+                            <p>已經註冊？ <a href="{{ url_for('auth.signin') }}">點擊登入</a></p>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
                     </form>
