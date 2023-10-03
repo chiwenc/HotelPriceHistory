@@ -17,7 +17,7 @@ class DatabaseConfig:
                           "port": 3306,
                           "cursorclass": pymysql.cursors.DictCursor,
                           "autocommit": True}
-        
+
 class FlaskConfig:
     def __init__(self):
         # self.SECRET_KEY = os.getenv("SECRET_KEY")
@@ -28,3 +28,5 @@ class FlaskConfig:
         # self.JWT_TOKEN_LOCATION = "cookies"
         # self.JWT_ACCESS_COOKIE_PATH = "/api/"
         # self.JWT_COOKIE_CSRF_PROTECT = False
+
+

@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <script src="https://unpkg.com/@superset-ui/embedded-sdk"></script>
+    <style>
+        iframe {
+        width: 100%;
+        height: 50%;
+        border: none;
+        }  
+        pretext {
+          margin-right: 10%;
+          margin-left: 10%;
+          font-family: Tahoma
+        };
+    </style>
+  </head>
+  <body>
+    <div class="pretext">
+      <h2> Hotel Price History </h2>
+      <p> Hotel Price History
+      <p id="dashboard-container"></p>
+      <script>
+        async function fetchGuestTokenFromBackend() {
+            let response = await fetch('http://127.0.0.1:5000/guest-token');
+            let data = await response.json()
+            return data 
+        }
+
+            const myDashboard = supersetEmbeddedSdk.embedDashboard({
+              id: "33757d10-61a5-4e81-a917-5e6307789969",
+              supersetDomain: "http://127.0.0.1:8088",
+              mountPoint: document.getElementById("dashboard-container"),
+              fetchGuestToken: () => fetchGuestTokenFromBackend(),
+              dashboardUiConfig: {
+                hideTitle: true,
+                hideChartControls: true
+              },
+            });
+      </script>
+    </div>
+  </body>
+</html>
