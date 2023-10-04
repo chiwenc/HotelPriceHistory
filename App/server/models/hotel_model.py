@@ -54,7 +54,13 @@ def get_hotel_all_history_price(user_id):
         result = cursor.fetchall() 
         return result
 
-# print(get_request_hotel_history_price(2))
-# print(get_request_hotel_history_price("APA酒店〈京成上野車站前〉", "2023-09-26", "2023-10-01"))
-
-# print(get_price_from_all_history("APA Hotel Machida-Eki Higashi"))
+def search_price_history_line_chart(hotel_name):
+    with con.cursor() as cursor:
+        SQL_search_price_history = "SELECT twd_price, crawl_time FROM all_history WHERE hotel_name = %s"
+        cursor.execute(SQL_search_price_history, (hotel_name,))
+        results = cursor.fetchall()
+        response = {
+            "crawl_time": [results[i]["crawl_time"] for i in range(len(results))],
+            "twd_price": [results[i]["twd_price"] for i in range(len(results))]
+        }
+        return response
