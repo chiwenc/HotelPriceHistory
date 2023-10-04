@@ -1,11 +1,53 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div>
-        <h1>Hi, {{ current_user.name }}</h1>
-        <a href="/dashapp/">View your Dashboard</a>
-        <a href="{{ url_for('auth.test') }}">View your Dashboard11111</a>
-        <br>
-        <a href="{{ url_for('auth.logout') }}">Logout</a>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="card">
+                <form id="search-form" method="POST" class="input-group">
+                    <input type="text" name="query" class="form-control" placeholder="Search for hotel...">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="submit">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div id="chart-container"></div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.getElementById('search-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var query = document.querySelector('input[name="query"]').value;
+
+        fetch('/api/v1/hotel/search_price/?hotel_name=' + encodeURIComponent(query))
+        .then(response => response.json())
+        .then(data => {
+            if (data.crawl_time.length === 0) {
+                document.getElementById('chart-container').innerHTML = "系统查無此飯店資料";
+            } else {
+                console.log(data)
+                drawHistoryPriceLineChart(data);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+    function drawHistoryPriceLineChart(data) {
+        var trace= {
+            x: data.crawl_time,
+            y: data.twd_price,
+            type: 'scatter'
+        };
+        Plotly.newPlot('chart-container', [trace]);
+    }
+</script>
 {% endblock %}
