@@ -26,6 +26,7 @@
     document.getElementById('search-form').addEventListener('submit', function (e) {
         e.preventDefault();
         var query = document.querySelector('input[name="query"]').value;
+        document.getElementById('chart-container').innerHTML = "";
 
         fetch('/api/v1/hotel/search_price/?hotel_name=' + encodeURIComponent(query))
         .then(response => response.json())
