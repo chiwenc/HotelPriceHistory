@@ -73,7 +73,7 @@ def crawl_single_hotel(hotel_name, checkin_date, checkout_date):
     
     except Exception as e:
             print(f"error: {e}")
-            pass
+            single_history_set.add((hotel_name, checkin_date, checkout_date, None, None, crawl_time_utc_8))
     
 
 def crawl_all_hotels_from_region(region):
@@ -248,6 +248,9 @@ if __name__ == "__main__":
     all_history_set = set()
     crawl_all_hotels_from_region("東京")
     crawl_all_hotels_from_region("大阪")
+    crawl_all_hotels_from_region("北海道")
+    crawl_all_hotels_from_region("名古屋")
+    crawl_all_hotels_from_region("九州")
     # print(all_history_set)
     all_history_list = list(all_history_set)
     insert_all_history_to_db(all_history_list)
