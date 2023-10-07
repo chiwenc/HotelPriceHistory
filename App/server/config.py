@@ -28,12 +28,13 @@ class FlaskConfig:
         # self.JWT_TOKEN_LOCATION = "cookies"
         # self.JWT_ACCESS_COOKIE_PATH = "/api/"
         # self.JWT_COOKIE_CSRF_PROTECT = False
-        # self.MAIL_SERVER = 'smtp.gmail.com'
-        # self.MAIL_PORT = 465
-        # self.MAIL_USE_SSL = True
-        # self.MAIL_DEFAULT_SENDER = ('admin', 'pricetrackertwsite@gmail.com')
-        # self.MAIL_USERNAME = 'pricetrackertwsite@gmail.com'
-        # self.MAIL_PASSWORD = 'gyffswilkurceemj'
+        self.MAIL_SERVER = 'smtp.gmail.com'
+        self.MAIL_PORT = 465
+        self.MAIL_USE_SSL = True
+        self.MAIL_USE_TLS = False
+        self.MAIL_DEFAULT_SENDER = ('admin', 'pricetrackertwsite@gmail.com')
+        self.MAIL_USERNAME = 'pricetracker'
+        self.MAIL_PASSWORD = 'yyii rxog iwue wzuv'
 
 
 
