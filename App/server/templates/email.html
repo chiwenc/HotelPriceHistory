@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>最新旅館優惠通知</title>
+    <!-- 引入Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="jumbotron">
+            <h1 class="display-4">親愛的 {{ user_name }} 先生/女士,</h1>
+            <p class="lead">我們很高興地通知您，以下是一些提供最新低價的旅館：</p>
+            <!-- 使用循環列出多家旅館的資訊 -->
+            <ul class="list-group">
+                {% for index, row in filter_user_data.iterrows() %}
+                    <li class="list-group-item">
+                        <h3>{{ row['hotel_name'] }}</h3>
+                        <p>價格：{{ row['min_twd_price'] }} 新台幣</p>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <p class="lead">這是一個難得的機會，請不要錯過！</p>
+        </div>
+    </div>
+
+    <!-- 引入Bootstrap JavaScript和jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
