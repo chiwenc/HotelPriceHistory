@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        <h1 class="mt-5">飯店列表</h1>
+
+        <!-- 下拉式選單用來選擇地區 -->
+        <label for="regionSelect">選擇地區：</label>
+        <select id="regionSelect">
+            <option value="all">全部</option>
+            <option value="九州">九州</option>
+            <option value="北海道">北海道</option>
+            <option value="東京">東京</option>
+            <!-- 添加其他地區選項 -->
+        </select>
+
+        <div id="hotel-list" class="mt-4">
+            <!-- 飯店資料將會動態插入到這裡 -->
+        </div>
+        <div class="pagination mt-4">
+            <button id="prev-page" class="btn btn-primary">上一頁</button>
+            <button id="next-page" class="btn btn-primary">下一頁</button>
+        </div>
+    </div>
+
+    <!-- 先載入 jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- 再載入 Bootstrap JavaScript 文件 -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- 接下來是你的自訂 JavaScript 代碼 -->
+    <script>
+        // 監聽下拉式選單的變更事件
+        const regionSelect = document.getElementById("regionSelect");
+        regionSelect.addEventListener("change", function () {
+            const selectedRegion = regionSelect.value; // 取得所選地區
+
+            // 取得所有飯店卡片
+            const hotelCards = document.querySelectorAll(".card");
+
+            // 遍歷卡片，根據所選地區顯示或隱藏
+            hotelCards.forEach(card => {
+                const cardRegion = card.querySelector(".card-region").textContent;
+                console.log(selectedRegion)
+                console.log(cardRegion)
+                if (selectedRegion === "all" || selectedRegion == "地區：九州") {
+                    card.style.display = "block"; // 顯示卡片
+                } else {
+                    card.style.display = "none"; // 隱藏卡片
+                }
+            });
+        });
+
+        // 使用 fetch 來獲取資料
+        fetch('/api/v1/hotel/get_week_best_price/')
+            .then(response => response.json())
+            .then(data => {
+                // 取得要插入飯店資料的父元素
+                const hotelList = document.getElementById("hotel-list");
+
+                // 遍歷 API 回應的飯店資料並動態生成 HTML 元素
+                data.hotels.forEach(hotel => {
+                    const hotelDiv = document.createElement("div");
+                    hotelDiv.classList.add("card", "mb-3");
+
+                    // 創建飯店資訊元素
+                    const cardBody = document.createElement("div");
+                    cardBody.classList.add("card-body");
+                    const hotelRegion = document.createElement("p");
+                    hotelRegion.classList.add("card-text", "card-region"); // 添加類別以便篩選
+                    hotelRegion.textContent = '地區：' + hotel.region;
+                    const hotelName = document.createElement("h5");
+                    hotelName.classList.add("card-title");
+                    hotelName.textContent = hotel.hotel_name;
+                    const hotelPrice = document.createElement("p");
+                    hotelPrice.classList.add("card-text");
+                    hotelPrice.textContent = '價格：' + hotel.min_twd_price + ' TWD';
+
+                    // 將飯店資訊元素添加到飯店 Div 中
+                    cardBody.appendChild(hotelRegion);
+                    cardBody.appendChild(hotelName);
+                    cardBody.appendChild(hotelPrice);
+                    hotelDiv.appendChild(cardBody);
+
+                    // 將飯店 Div 添加到父元素
+                    hotelList.appendChild(hotelDiv);
+                });
+            })
+            .catch(error => {
+                console.error('無法取得飯店資料：', error);
+            });
+    </script>
+</body>
+</html>
+{% endblock %}

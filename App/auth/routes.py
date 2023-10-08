@@ -1,10 +1,14 @@
 from flask import render_template, flash, redirect, url_for, request, jsonify
+from flask_caching import Cache
 from flask_login import current_user, login_user, logout_user, login_required, LoginManager
 from App.server.models.user_model import User, check_email_exist, insert_user_value, get_user_info, verify_user, insert_user_request, get_user_request, delete_user_request
-from App.server.models.hotel_model import get_request_hotel_history_price, get_hotel_all_history_price, search_price_history_line_chart
+from App.server.models.hotel_model import get_request_hotel_history_price, get_hotel_all_history_price, search_price_history_line_chart, get_week_best_price, get_daily_all_hotels_with_week_best_price
 from App.auth import bp
 from App.models import User
 from flask_login import UserMixin
+from App import cache
+
+PAGE_SIZE = 10
 
 class User(UserMixin):
     pass
@@ -113,9 +117,43 @@ def get_dashboard_all_df():
 @bp.route("/api/v1/hotel/search_price/", methods=['GET','POST'])
 def get_search_hotel_history_price():
    hotel_name = request.values.get("hotel_name")
-   print(f"hotel_name {hotel_name}")
-   print(search_price_history_line_chart(hotel_name))
    return search_price_history_line_chart(hotel_name)
+
+@bp.route("/api/v1/hotel/week_best_price/", methods=['GET','POST'])
+@cache.cached(timeout=3600)
+def week_best_price():
+    return render_template("week_best_price.html")
+
+
+def pagination(data_list, PAGE_SIZE, paging):
+    hotels_count = len(data_list)
+    total_pages = hotels_count // PAGE_SIZE
+    if hotels_count % PAGE_SIZE != 0:
+        total_pages += 1
+    start_index = (paging-1) * PAGE_SIZE
+    end_index = start_index + PAGE_SIZE
+    
+    result = {"total_pages": total_pages}
+    
+    if (hotels_count > paging * PAGE_SIZE):
+        result["next_paging"] = (paging + 1)
+        result["hotels"] = data_list[start_index:end_index]
+    else:
+        result["next_paging"] = "這是最後一頁"
+        result["hotels"] = data_list[start_index:hotels_count]
+    
+    return result
+
+
+@bp.route("/api/v1/hotel/get_week_best_price/", methods=['GET','POST'])
+def search_week_best_price():
+    paging = request.values.get('paging', 1)
+    paging = int(paging)
+    region = request.values.get('region', None)    
+    data_list = get_daily_all_hotels_with_week_best_price("2023-10-07")
+    result = pagination(data_list, PAGE_SIZE, paging)
+    
+    return jsonify(result)
 
 
 @bp.route('/logout')
