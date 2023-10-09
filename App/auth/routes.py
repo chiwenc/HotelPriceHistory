@@ -67,7 +67,7 @@ def signin():
             elif verify_user(email,password) == "Matched.":
                 login_user(user)
                 flash("Login Success.")
-                return redirect(url_for("auth.index"))
+                return redirect(url_for("auth.member_page"))
         
         except Exception as e:
             return f"Server Error Response: {e}", 500
@@ -160,3 +160,10 @@ def email_history_cheapest_price():
         print(mail)
         mail.send(msg)
     return datas
+
+@bp.route('/memberpage')
+@login_required
+def member_page():
+    user_id = current_user.id
+    data = get_request_history_cheapest_price(user_id)
+    return render_template('member.html', data=data)
