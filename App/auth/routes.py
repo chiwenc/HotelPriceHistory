@@ -1,6 +1,8 @@
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_caching import Cache
 from flask_login import current_user, login_user, logout_user, login_required, LoginManager
+from flask_mail import Message
+from App import mail
 from App.server.models.user_model import User, check_email_exist, insert_user_value, get_user_info, verify_user, insert_user_request, get_user_request, delete_user_request
 from App.server.models.hotel_model import get_request_hotel_history_price, get_hotel_all_history_price, search_price_history_line_chart, get_week_best_price, get_daily_all_hotels_with_week_best_price, get_request_hotel_with_best_price
 from App.auth import bp
@@ -173,4 +175,33 @@ def logout():
     flash("登出成功")
     return redirect(url_for("auth.signin"))
 
+@bp.route('/email')
+def send_email():
+    datas = get_request_daily_cheapest_price()
+    df = pd.DataFrame(datas)
+    unique_emails = df['email'].unique()
+    for email in unique_emails:
+        filter_user_data = df[df['email'] == email]
+        user_name = filter_user_data['name'].unique()[0]
+        message = '...'
+        # subject = "hello, %s" % data["name"]
+        msg = Message('最新旅館優惠通知', sender='pricetrackertwsite@gmail.com', recipients=[email])
+        msg.html = render_template('email.html', user_name=user_name, filter_user_data=filter_user_data)
+        print(mail)
+        mail.send(msg)
+    return datas
 
+@bp.route('/notification/request_history_cheapest_price')
+def email_history_cheapest_price():
+    datas = get_request_history_cheapest_price()
+    df = pd.DataFrame(datas)
+    unique_emails = df['email'].unique()
+    for email in unique_emails:
+        filter_user_data = df[df['email'] == email]
+        user_name = filter_user_data['name'].unique()[0]
+        # subject = "hello, %s" % data["name"]
+        msg = Message('旅館歷史最低價通知', sender='pricetrackertwsite@gmail.com', recipients=[email])
+        msg.html = render_template('email.html', user_name=user_name, filter_user_data=filter_user_data)
+        print(mail)
+        mail.send(msg)
+    return datas
