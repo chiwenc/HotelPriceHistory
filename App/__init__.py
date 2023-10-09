@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from flask_mail import Mail, Message
 import os
 from flask_login import LoginManager
+from flask_redis import FlaskRedis
+from flask_caching import Cache
 from flask_apscheduler import APScheduler
 from App.server.models.hotel_model import get_request_daily_cheapest_price
 from datetime import datetime
@@ -17,6 +19,8 @@ mail = Mail()
 scheduler = APScheduler()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.signin'
+# redis_client = FlaskRedis()
+cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
 
 email_batch = 1
 
@@ -32,8 +36,14 @@ def create_app():
         MAIL_PASSWORD='gyffswilkurceemj'
     )
     login_manager.init_app(app)
+<<<<<<< HEAD
+    # redis_client.init_app(app)
+    cache.init_app(app)
+
+=======
     mail.init_app(app)
     scheduler.init_app(app)
+>>>>>>> develop
     from App.auth import bp as auth_bp
     app.register_blueprint(auth_bp)
 

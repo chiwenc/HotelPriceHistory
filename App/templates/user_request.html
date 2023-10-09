@@ -33,7 +33,7 @@
                                 {{ booking.hotel_name }} - 入住日期: {{ booking.checkin_date }}, 退房日期: {{ booking.checkout_date }}
                             </div>
                             <div>
-                                <button class="btn btn-primary btn-sm mr-2" onclick="redirectToDashboard('{{ booking.id }}')">Dashboard</button>
+                                <!-- <button class="btn btn-primary btn-sm mr-2" onclick="redirectToDashboard('{{ booking.id }}')">Dashboard</button> -->
                                 <button class="btn btn-danger btn-sm" onclick="deleteBooking('{{ booking.id }}')">删除</button>
                             </div>
                         </div>
@@ -44,20 +44,18 @@
     </div>
 
     <script>
-        // function deleteBooking(bookingId) {
-        //     if (confirm("確定刪除嗎？")) {
-
-        //         fetch(`/api/v1/user/delete_request/${bookingId}`, {
-        //             method: 'DELETE',
-        //         })
-        //         .then(response => {
-        //             if (response.ok) {
-
-        //                 location.reload();
-        //             }
-        //         });
-        //     }
-        // };
+        function deleteBooking(bookingId) {
+            if (confirm("確定刪除嗎？")) {
+                fetch('/api/v1/user/delete_request/?request_id=' + encodeURIComponent(bookingId))
+                .then(response => response.json())
+                .then(data => {
+                    // 显示成功删除的消息
+                    alert(data.message);
+                    // 刷新页面
+                    location.reload();
+                });
+            }
+        };
         // function redirectToDashboard(bookingId) {
         // window.location.href = `/api/dashboard?bookingId=${bookingId}`;
         // }
