@@ -8,7 +8,7 @@ from App.models import User
 from flask_login import UserMixin
 from App import cache
 
-PAGE_SIZE = 10
+PAGE_SIZE = 15
 
 class User(UserMixin):
     pass
@@ -150,8 +150,9 @@ def search_week_best_price():
     paging = request.values.get('paging', 1)
     paging = int(paging)
     region = request.values.get('region', None)    
-    data_list = get_daily_all_hotels_with_week_best_price("2023-10-07")
+    data_list = get_daily_all_hotels_with_week_best_price("2023-10-07",region)
     result = pagination(data_list, PAGE_SIZE, paging)
+    # result = {"hotels": data_list}
     
     return jsonify(result)
 
