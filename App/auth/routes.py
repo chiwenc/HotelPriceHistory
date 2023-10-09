@@ -2,13 +2,13 @@ from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_caching import Cache
 from flask_login import current_user, login_user, logout_user, login_required, LoginManager
 from App.server.models.user_model import User, check_email_exist, insert_user_value, get_user_info, verify_user, insert_user_request, get_user_request, delete_user_request
-from App.server.models.hotel_model import get_request_hotel_history_price, get_hotel_all_history_price, search_price_history_line_chart, get_week_best_price, get_daily_all_hotels_with_week_best_price
+from App.server.models.hotel_model import get_request_hotel_history_price, get_hotel_all_history_price, search_price_history_line_chart, get_week_best_price, get_daily_all_hotels_with_week_best_price, get_request_hotel_with_best_price
 from App.auth import bp
 from App.models import User
 from flask_login import UserMixin
 from App import cache
 
-PAGE_SIZE = 15
+PAGE_SIZE = 10
 
 class User(UserMixin):
     pass
@@ -114,11 +114,6 @@ def get_dashboard_all_df():
     all_data = get_hotel_all_history_price(user_id)
     return all_data
 
-@bp.route("/api/v1/hotel/search_price/", methods=['GET','POST'])
-def get_search_hotel_history_price():
-   hotel_name = request.values.get("hotel_name")
-   return search_price_history_line_chart(hotel_name)
-
 @bp.route("/api/v1/hotel/week_best_price/", methods=['GET','POST'])
 @cache.cached(timeout=3600)
 def week_best_price():
@@ -156,6 +151,20 @@ def search_week_best_price():
     
     return jsonify(result)
 
+@bp.route("/api/v1/hotel/search_price/", methods=['GET','POST'])
+def get_search_hotel_history_price():
+   hotel_name = request.values.get("hotel_name")
+   return search_price_history_line_chart(hotel_name)
+
+@bp.route("/api/v1/hotel/get_request_hotel_info")
+def search_request_hotel():
+    hotel_name = request.values.get("hotel_name")
+    hotel_data = get_request_hotel_with_best_price("2023-10-07",hotel_name)
+    chart_data = search_price_history_line_chart(hotel_name)
+    return {
+        "hotel_data": hotel_data[0],
+        "chart_data": chart_data
+    }
 
 @bp.route('/logout')
 @login_required
