@@ -36,14 +36,11 @@ def create_app():
         MAIL_PASSWORD='gyffswilkurceemj'
     )
     login_manager.init_app(app)
-<<<<<<< HEAD
     # redis_client.init_app(app)
     cache.init_app(app)
 
-=======
     mail.init_app(app)
     scheduler.init_app(app)
->>>>>>> develop
     from App.auth import bp as auth_bp
     app.register_blueprint(auth_bp)
 
