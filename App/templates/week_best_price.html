@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8"> <!-- 外部div，用于水平居中和设置宽度 -->
+                <div class="card">
+                    <form id="search-form" method="POST" class="input-group">
+                        <input type="text" name="query" class="form-control" placeholder="Search for hotel...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="submit">Search</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 下拉式選單用來選擇地區 -->
+                <label for="regionSelect">選擇地區：</label>
+                <select id="regionSelect">
+                    <option value="all">全部</option>
+                    <option value="九州">九州</option>
+                    <option value="北海道">北海道</option>
+                    <option value="東京">東京</option>
+                    <option value="大阪">大阪</option>
+                    <option value="名古屋">名古屋</option>
+                </select>
+
+                <div id="hotel-list" class="mt-4">
+                    <!-- 飯店資料將會動態插入到這裡 -->
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-lg-12">
+                        <div id="chart-container" style="width:2000px;">
+                            <!-- 圖表將在這裡顯示 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分頁 div -->
+                <div class="text-center mt-4" id="pagination-container">
+                    <div class="pagination d-flex justify-content-center align-items-center">
+                        <button id="prev-page" class="btn btn-primary">上一頁</button>
+                        <span id="current-page" class="mx-2"></span>
+                        <button id="next-page" class="btn btn-primary">下一頁</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        .chart-container {
+            text-align: center; /* 水平居中 */
+            margin: 0 auto; /* 自動調整左右邊距以實現水平居中 */
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+
+        let nextPage = null;
+        const regionSelect = document.getElementById("regionSelect");
+        const prevPageButton = document.getElementById("prev-page");
+        const currentPageElement = document.getElementById("current-page");
+        const nextPageButton = document.getElementById("next-page");
+
+        let currentPage = 1; 
+        let selectedRegion = "all"; 
+
+        regionSelect.addEventListener("change", function () {
+            selectedRegion = regionSelect.value;
+            currentPage = 1;
+            fetchHotels(currentPage, selectedRegion); 
+        });
+
+        prevPageButton.addEventListener("click", function () {
+            if (currentPage > 1) {
+                currentPage-- ;
+                fetchHotels(currentPage, selectedRegion); 
+            }
+        });
+
+        nextPageButton.addEventListener("click", function () {
+            if (nextPage !== null) {
+                currentPage = nextPage
+                fetchHotels(currentPage, selectedRegion); 
+            }
+        });
+
+        function fetchHotels(currentPage, selectedRegion) {
+            const apiUrl = `/api/v1/hotel/get_week_best_price/?paging=${currentPage}&region=${selectedRegion}`;
+
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    nextPage = data.next_paging
+
+                    currentPageElement.textContent = `第 ${currentPage} 頁`;
+                    
+                    const hotelList = document.getElementById("hotel-list");
+                    hotelList.innerHTML = "";
+
+                    data.hotels.forEach(hotel => {
+                        const hotelCard = createHotelCard(hotel); // 使用函数创建酒店卡片
+                        hotelList.appendChild(hotelCard); // 插入酒店卡片到页面中
+                    });
+
+                })
+                .catch(error => {
+                    console.error('無法取得飯店資料：', error);
+            })
+        };
+        function createHotelCard(hotel) {
+            const hotelDiv = document.createElement("div");
+            hotelDiv.classList.add("card", "mb-3");
+
+            // 创建酒店信息的卡片主体
+            const cardBody = document.createElement("div");
+            cardBody.classList.add("card-body");
+
+            if (hotel.is_week_best_price === 1) {
+                const bestPriceLabel = document.createElement("p");
+                bestPriceLabel.classList.add("card-text", "text-danger");
+                bestPriceLabel.textContent = "7天最低價!!";
+                cardBody.appendChild(bestPriceLabel);
+            }
+
+            const hotelRegion = document.createElement("p");
+            hotelRegion.classList.add("card-text", "card-region");
+            hotelRegion.textContent = '地區：' + hotel.region;
+
+            const hotelName = document.createElement("h5");
+            hotelName.classList.add("card-title");
+            hotelName.textContent = hotel.hotel_name;
+
+            const hotelPrice = document.createElement("p");
+            hotelPrice.classList.add("card-text");
+            hotelPrice.textContent = '今日最低價格：' + hotel.min_twd_price + ' TWD';
+
+            // 将酒店信息元素添加到酒店卡片主体中
+            cardBody.appendChild(hotelRegion);
+            cardBody.appendChild(hotelName);
+            cardBody.appendChild(hotelPrice);
+
+            // 将酒店卡片主体添加到酒店卡片中
+            hotelDiv.appendChild(cardBody);
+
+            return hotelDiv;
+        }
+
+        
+        document.getElementById('search-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var query = document.querySelector('input[name="query"]').value;
+            const hotelList = document.getElementById("hotel-list");
+            hotelList.innerHTML = "";
+            document.getElementById('chart-container').innerHTML = "";
+
+            fetch('/api/v1/hotel/get_request_hotel_info?hotel_name=' + encodeURIComponent(query))
+            .then(response => response.json())
+            .then(data => {
+                if (data.chart_data.crawl_time.length === 0) {
+                    document.getElementById('chart-container').innerHTML = "系统查無此飯店資料";
+                } else {
+                    const hotelCard = createHotelCard(data.hotel_data); // 使用函数创建酒店卡片
+                    hotelList.appendChild(hotelCard); // 插入酒店卡片到页面中
+                    drawHistoryPriceLineChart(data.chart_data);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+        function drawHistoryPriceLineChart(data) {
+            var trace= {
+                x: data.crawl_time,
+                y: data.twd_price,
+                type: 'scatter'
+            };
+            var layout = {
+                xaxis: {
+                    title: {
+                        text: '日期' // X軸標籤
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: '價格' // Y軸標籤
+                    }
+                },
+                title: {
+                    text: '最低價趨勢圖' // 圖名
+                },
+                showlegend: false, // 隱藏圖例
+                margin: {
+                    l: 0,   // 左邊距（像素）
+                    r: 0    // 右邊距（像素）
+                }
+            };
+
+    var config = {
+        displayModeBar: false, // 如果您不希望顯示模式欄，可以將其設為false
+        responsive: true
+        }
+
+       Plotly.newPlot('chart-container', [trace], config);
+    };
+    
+    fetchHotels(currentPage, selectedRegion);
+
+    </script>
+</body>
+</html>
+{% endblock %}
