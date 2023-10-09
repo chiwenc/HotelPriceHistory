@@ -98,9 +98,11 @@ def user_request():
 
     return render_template("user_request.html", bookings=user_request_data)
 
-@bp.route('/api/v1/user/delete_request/<request_id>', methods=['GET','POST'])
-def delete_request(request_id):
+@bp.route('/api/v1/user/delete_request/', methods=['GET','POST'])
+def delete_request():
+    request_id = request.values.get("request_id")
     delete_user_request(request_id)
+    return jsonify({'message': '成功刪除'})
 
 @bp.route('/api/v1/dashboard/single_data')
 @login_required
