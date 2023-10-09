@@ -4,7 +4,7 @@ from flask_login import current_user, login_user, logout_user, login_required, L
 from flask_mail import Message
 from App import mail
 from App.server.models.user_model import User, check_email_exist, insert_user_value, get_user_info, verify_user, insert_user_request, get_user_request, delete_user_request
-from App.server.models.hotel_model import get_request_hotel_history_price, get_hotel_all_history_price, search_price_history_line_chart, get_week_best_price, get_daily_all_hotels_with_week_best_price, get_request_hotel_with_best_price
+from App.server.models.hotel_model import get_request_hotel_history_price, get_hotel_all_history_price, search_price_history_line_chart, get_request_history_cheapest_price, get_daily_all_hotels_with_week_best_price, get_request_hotel_with_best_price
 from App.auth import bp
 from App.models import User
 from flask_login import UserMixin
