@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-4"> <!-- 增加顶部外边距 -->
+        <div class="col-md-12">
+            <h2 class="mb-4">歡迎回來, {{ current_user.name }}</h2> <!-- 增加底部外边距 -->
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="border rounded p-3 mb-5">
+                <h4>功能頁面</h4>
+                <div class="navigation bg-light p-3">
+                    <a href="/">首頁</a><br>
+                    <a href="{{ url_for('auth.test') }}">Dashboard</a><br>
+                    <a href="{{ url_for('auth.user_request') }}">追蹤酒店</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="border rounded p-3 mb-5"> <!-- 增加底部外边距 -->
+                <h4><i class="fas fa-bell"></i> 最新低價</h4>
+                {% if data %}
+                    {% for entry in data %}
+                    <div class="notification mb-4 p-3 bg-light">
+                        <p><span style="font-size: 1.2em;">{{ entry['crawl_time'].strftime('%Y-%m-%d') }}</span></p>
+                        <p>您所追蹤的 {{ entry['checkin_date'] }} 入住 {{ entry['checkout_date'] }} 退房 的 {{ entry['hotel_name'] }} 飯店有最新歷史低價 <span style="font-weight: bold;">NT$ {{ entry['min_twd_price'] }}</span> !!</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>目前尚未追蹤到最低價</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

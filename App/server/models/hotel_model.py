@@ -219,25 +219,41 @@ def get_request_daily_cheapest_price():
         result = cursor.fetchall()
         return result
 
-def get_request_history_cheapest_price():
+def get_request_history_cheapest_price(user_id=None):
     """
     拿取使用者追蹤飯店今日的價格為歷史最低價的資料通知使用者
     """
     with con.cursor() as cursor:
-        SQL_request_history_cheapest_price = """
-            select ur.user_id, ui.name, ui.email, hp.hotel_name, hp.checkin_date, hp.checkout_date, hp.agency, hp.min_twd_price, hp.agency, hp.crawl_time
-            from (
-	            select hotel_name, checkin_date, checkout_date, agency, min(twd_price) as min_twd_price, crawl_time from history
-	            group by hotel_name, checkin_date, checkout_date
-            ) hp
-            left join user_request ur on hp.hotel_name = ur.hotel_name and hp.checkin_date = ur.checkin_date and hp.checkout_date = ur.checkout_date
-            left join user_info ui on ur.user_id = ui.id
-            where date(crawl_time) >= DATE(DATE_SUB(CONVERT_TZ(CURDATE(), 'UTC', '+8:00'), INTERVAL 2 DAY))
-        """
+        if not user_id:
+            SQL_request_history_cheapest_price = """
+                select ur.user_id, ui.name, ui.email, hp.hotel_name, hp.checkin_date, hp.checkout_date, hp.agency, hp.min_twd_price, hp.agency, hp.crawl_time
+                from (
+                    select hotel_name, checkin_date, checkout_date, agency, min(twd_price) as min_twd_price, crawl_time from history
+                    group by hotel_name, checkin_date, checkout_date
+                ) hp
+                left join user_request ur on hp.hotel_name = ur.hotel_name and hp.checkin_date = ur.checkin_date and hp.checkout_date = ur.checkout_date
+                left join user_info ui on ur.user_id = ui.id
+                where date(crawl_time) = DATE(CONVERT_TZ(CURDATE(), 'UTC', '+8:00'))
+                and min_twd_price is not null
+            """
+        else:
+            SQL_request_history_cheapest_price = f"""
+                select ur.user_id, ui.name, ui.email, hp.hotel_name, hp.checkin_date, hp.checkout_date, hp.agency, hp.min_twd_price, hp.agency, hp.crawl_time
+                from (
+                    select hotel_name, checkin_date, checkout_date, agency, min(twd_price) as min_twd_price, crawl_time from history
+                    group by hotel_name, checkin_date, checkout_date
+                ) hp
+                left join user_request ur on hp.hotel_name = ur.hotel_name and hp.checkin_date = ur.checkin_date and hp.checkout_date = ur.checkout_date
+                left join user_info ui on ur.user_id = ui.id
+                where min_twd_price is not null
+                and ur.user_id = {user_id}
+                order by hp.crawl_time desc
+            """
         cursor.execute(SQL_request_history_cheapest_price)
         result = cursor.fetchall()
         return result
 
+# print(get_request_history_cheapest_price(4))
 
 # where date(crawl_time) = DATE(CONVERT_TZ(CURDATE(), 'UTC', '+8:00'))
 # where date(crawl_time) = DATE(DATE_SUB(CONVERT_TZ(CURDATE(), 'UTC', '+8:00'), INTERVAL 2 DAY))
