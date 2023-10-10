@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8 text-center">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="mb-4">搜尋飯店</h2>
             <div class="card">
                 <form id="search-form" method="POST" class="input-group">
                     <input type="text" name="query" class="form-control" placeholder="Search for hotel...">
@@ -14,41 +16,180 @@
             </div>
         </div>
     </div>
-    <div class="row justify-content-center">
-        <!-- <div class="col-md-8"> -->
-            <div id="chart-container"></div>
-        <!-- </div> -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <!-- 篩選器 -->
+            <div class="border rounded p-3 mb-5">
+                <h4>篩選</h4>
+                <!-- 地區筛选 -->
+                <div class="mb-3">
+                    <h5>地區</h5>
+                    <select id="regionSelect">
+                        <option value="all">全部</option>
+                        <option value="九州">九州</option>
+                        <option value="北海道">北海道</option>
+                        <option value="東京">東京</option>
+                        <option value="大阪">大阪</option>
+                        <option value="名古屋">名古屋</option>
+                    </select>
+                </div>
+                <!-- 價格篩選 -->
+                <div>
+                    <h5>價格</h5>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="sevenDayLowestPrice">
+                        <label class="form-check-label" for="sevenDayLowestPrice">
+                            歷史最低價
+                        </label>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label for="minPrice">最低價格：</label>
+                    <input type="text" id="minPrice" class="form-control" placeholder="最低價格">
+                </div>
+                <div class="mt-2">
+                    <label for="maxPrice">最高價格：</label>
+                    <input type="text" id="maxPrice" class="form-control" placeholder="最高價格">
+                </div>
+                <!-- 提交按钮 -->
+                <div class="mt-3 text-center">
+                    <button id="filter-submit" type="submit" class="btn btn-primary">送出</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <!-- 飯店卡片 -->
+            <div id="hotel-list">
+                {% for hotel in hotels %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            {% if hotel.is_week_best_price == 1 %}
+                                <p class="card-text text-danger">歷史最低價!!</p>
+                            {% endif %}
+                            <p class="card-text card-region">地區：{{ hotel.region }}</p>
+                            <h5 class="card-title">{{ hotel.hotel_name }}</h5>
+                            <p class="card-text">今日最低價格：{{ hotel.min_twd_price }} TWD</p>
+                            <a href="/api/v1/hotel/search_price/?hotel_name={{ hotel.hotel_name }}" class="clickable-text">點擊查看歷史價格</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-12">
+            <div id="chart-container" style="width: 2000px;">
+                <!-- 圖表將在這裡顯示 -->
+            </div>
+        </div>
+    </div>
+    <div class="text-center mt-4" id="pagination-container">
+        <div class="pagination d-flex justify-content-center align-items-center">
+            <button id="prev-page" class="btn btn-primary">上一頁</button>
+            <span id="current-page" class="mx-2">第 {{ current_page }} 頁</span>
+            <button id="next-page" class="btn btn-primary">下一頁</button>
+        </div>
     </div>
 </div>
+</div>
+    <style>
+        .chart-container {
+            text-align: center; /* 水平居中 */
+            margin: 0 auto; /* 自動調整左右邊距以實現水平居中 */
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
 
+        var nextPage = "{{ next_paging }}";
+        console.log(nextPage)
+        var totalPage = {{ total_pages }};
+        const prevPageButton = document.getElementById("prev-page");
+        const currentPageElement = document.getElementById("current-page");
+        const nextPageButton = document.getElementById("next-page");
 
-<script>
-    document.getElementById('search-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-        var query = document.querySelector('input[name="query"]').value;
-        document.getElementById('chart-container').innerHTML = "";
+        // let currentPage = 1; 
+        // let selectedRegion = "all"; 
+        
+        let urlParams = new URLSearchParams(window.location.search);
+        let region = urlParams.get('region'); 
+        let min_price = urlParams.get('min_price'); 
+        let max_price = urlParams.get('max_price'); 
+        let is_week_best_price = urlParams.get('is_week_best_price');
+        
+        function buildURL(currentPage=1, region, minPrice, maxPrice, isWeekBestPrice) {
+            let url_body = `index?paging=${currentPage}`;
 
-        fetch('/api/v1/hotel/search_price/?hotel_name=' + encodeURIComponent(query))
-        .then(response => response.json())
-        .then(data => {
-            if (data.crawl_time.length === 0) {
-                document.getElementById('chart-container').innerHTML = "系统查無此飯店資料";
-            } else {
-                console.log(data)
-                drawHistoryPriceLineChart(data);
+            if (region !== null && region !== undefined && region !== "") {
+                url_body += `&region=${region}`;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
+            if (minPrice !== null && minPrice !== undefined && minPrice !== "") {
+                url_body += `&min_price=${minPrice}`;
+            }
+            if (maxPrice !== null && maxPrice !== undefined && maxPrice !== "") {
+                url_body += `&max_price=${maxPrice}`;
+            }
+            if (isWeekBestPrice !== null && isWeekBestPrice !== undefined && isWeekBestPrice !== "") {
+                url_body += `&is_week_best_price=${isWeekBestPrice}`;
+            }
+            return url_body;
+        }
+        const regionSelect = document.getElementById("regionSelect");
+        const filterWeekBestPrice = document.getElementById('sevenDayLowestPrice');
+        const filterMinPrice = document.getElementById('minPrice');
+        const filterMaxPrice = document.getElementById('maxPrice');
+        const filterSubmitButton = document.getElementById('filter-submit');
+        
+        filterSubmitButton.addEventListener('click', function (event) {
+            event.preventDefault(); // 阻止默認的表單提交行為
+            selectedRegion = regionSelect.value;
+            is_week_best_price = filterWeekBestPrice.checked ? 1 : null;
+            min_price = filterMinPrice.value
+            max_price = filterMaxPrice.value
+            let url = buildURL(1, selectedRegion, min_price, max_price, is_week_best_price)
+            window.location.href = url;
         });
-    });
-    function drawHistoryPriceLineChart(data) {
-        var trace= {
-            x: data.crawl_time,
-            y: data.twd_price,
-            type: 'scatter'
-        };
-        Plotly.newPlot('chart-container', [trace]);
-    }
-</script>
+
+
+
+        // regionSelect.addEventListener("change", function () {
+        //     selectedRegion = regionSelect.value;
+        //     let url = buildURL(1, selectedRegion, min_price, max_price, is_week_best_price)
+        //     window.location.href = url;
+        // });
+
+        prevPageButton.addEventListener("click", function () {
+            let url = buildURL((nextPage-2), region, min_price, max_price, is_week_best_price)
+            console.log(url)
+            window.location.href = url;
+        });
+
+        nextPageButton.addEventListener("click", function () {
+            if (nextPage !== null) {
+                // window.location.href = "/index?paging=" + nextPage;
+                let url = buildURL(nextPage, region, min_price, max_price, is_week_best_price)
+                console.log(url)
+                window.location.href = url;
+            }
+        });
+        
+        document.getElementById("search-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            var query = document.querySelector("input[name='query']").value;
+
+            if (query) {
+                window.location.href = "/api/v1/hotel/search_price/?hotel_name=" + query;
+            }
+        });
+
+
+        if (nextPage === 2) {
+            prevPageButton.style.display = 'none';
+        } else if (nextPage === "這是最後一頁") {
+            nextPageButton.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
 {% endblock %}

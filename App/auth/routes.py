@@ -15,19 +15,52 @@ PAGE_SIZE = 10
 class User(UserMixin):
     pass
 
-
 def get_user():
     return current_user
+
+def pagination(data_list, PAGE_SIZE, paging):
+    hotels_count = len(data_list)
+    total_pages = hotels_count // PAGE_SIZE
+    if hotels_count % PAGE_SIZE != 0:
+        total_pages += 1
+    start_index = (paging-1) * PAGE_SIZE
+    end_index = start_index + PAGE_SIZE
+    
+    result = {"total_pages": total_pages}
+    
+    if (hotels_count > paging * PAGE_SIZE):
+        result["next_paging"] = (paging + 1)
+        result["hotels"] = data_list[start_index:end_index]
+    else:
+        result["next_paging"] = "這是最後一頁"
+        result["hotels"] = data_list[start_index:hotels_count]
+    
+    return result
 
 
 @bp.route("/", methods=['GET','POST'])
 @bp.route("/index", methods=['GET','POST'])
 def index():
-    return render_template('index.html')
+    paging = request.values.get('paging', 1)
+    paging = int(paging)
 
-@bp.route("/search", methods=['GET','POST'])
-def search():
-    return render_template('search.html')
+    filters = {
+        "date":"2023-10-10",
+        "region":request.values.get('region'),
+        "min_price":request.values.get('min_price'),
+        "max_price":request.values.get('max_price'),
+        "is_week_best_price":request.values.get('is_week_best_price')
+    }
+    data_list = get_daily_all_hotels_with_week_best_price(filters)
+    hotels = pagination(data_list, PAGE_SIZE, paging)
+    return render_template('index.html', hotels=hotels["hotels"], next_paging=hotels["next_paging"], total_pages=hotels["total_pages"], current_page=paging)
+
+@bp.route("/api/v1/hotel/search_price/", methods=['GET','POST'])
+def get_search_hotel_history_price():
+   hotel_name = request.values.get("hotel_name")
+   hotels = get_request_hotel_with_best_price("2023-10-10", hotel_name)
+   chart_data = search_price_history_line_chart(hotel_name)
+   return render_template("search_hotel.html", hotels=hotels, chart_data=chart_data)
 
 @bp.route("/api/v1/user/signup", methods=['GET','POST'])
 def signup():
@@ -119,46 +152,20 @@ def get_dashboard_all_df():
     return all_data
 
 @bp.route("/api/v1/hotel/week_best_price/", methods=['GET','POST'])
-@cache.cached(timeout=3600)
+# @cache.cached(timeout=3600)
 def week_best_price():
     return render_template("week_best_price.html")
 
-
-def pagination(data_list, PAGE_SIZE, paging):
-    hotels_count = len(data_list)
-    total_pages = hotels_count // PAGE_SIZE
-    if hotels_count % PAGE_SIZE != 0:
-        total_pages += 1
-    start_index = (paging-1) * PAGE_SIZE
-    end_index = start_index + PAGE_SIZE
+# @bp.route("/api/v1/hotel/get_week_best_price/", methods=['GET','POST'])
+# def search_week_best_price():
+#     paging = request.values.get('paging', 1)
+#     paging = int(paging)
+#     region = request.values.get('region', None)    
+#     data_list = get_daily_all_hotels_with_week_best_price("2023-10-07",region)
+#     result = pagination(data_list, PAGE_SIZE, paging)
+#     # result = {"hotels": data_list}
     
-    result = {"total_pages": total_pages}
-    
-    if (hotels_count > paging * PAGE_SIZE):
-        result["next_paging"] = (paging + 1)
-        result["hotels"] = data_list[start_index:end_index]
-    else:
-        result["next_paging"] = "這是最後一頁"
-        result["hotels"] = data_list[start_index:hotels_count]
-    
-    return result
-
-
-@bp.route("/api/v1/hotel/get_week_best_price/", methods=['GET','POST'])
-def search_week_best_price():
-    paging = request.values.get('paging', 1)
-    paging = int(paging)
-    region = request.values.get('region', None)    
-    data_list = get_daily_all_hotels_with_week_best_price("2023-10-07",region)
-    result = pagination(data_list, PAGE_SIZE, paging)
-    # result = {"hotels": data_list}
-    
-    return jsonify(result)
-
-@bp.route("/api/v1/hotel/search_price/", methods=['GET','POST'])
-def get_search_hotel_history_price():
-   hotel_name = request.values.get("hotel_name")
-   return search_price_history_line_chart(hotel_name)
+#     return jsonify(result)
 
 @bp.route("/api/v1/hotel/get_request_hotel_info")
 def search_request_hotel():

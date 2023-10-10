@@ -56,11 +56,11 @@ def get_hotel_all_history_price(user_id):
 
 def search_price_history_line_chart(hotel_name):
     with con.cursor() as cursor:
-        SQL_search_price_history = "SELECT crawl_time, min(twd_price) as min_twd_price FROM all_history WHERE hotel_name = %s GROUP BY 1"
+        SQL_search_price_history = "SELECT date(crawl_time) as crawl_date, min(twd_price) as min_twd_price FROM all_history WHERE hotel_name = %s GROUP BY 1"
         cursor.execute(SQL_search_price_history, (hotel_name,))
         results = cursor.fetchall()
         response = {
-            "crawl_time": [results[i]["crawl_time"] for i in range(len(results))],
+            "crawl_time": [results[i]["crawl_date"] for i in range(len(results))],
             "twd_price": [results[i]["min_twd_price"] for i in range(len(results))]
         }
         return response
@@ -92,86 +92,62 @@ def get_week_best_price(region):
         result = cursor.fetchall()
         return result
 
-def get_daily_all_hotels_with_week_best_price(date, region):
-# # def get_daily_all_hotels_with_week_best_price(filters: dict):
-#     """"
-#     {
-#         date: ...,
-#         region: ...,
-#         x: ...,
-#     }
-#     """
-#     # propsed solution:
-#     query = [
-#         """select a.region, a.hotel_name, a.crawl_time, min(a.twd_price) as min_twd_price
-#                     ,case when w.hotel_name is null then 0 else 1 end as is_week_best_price 
-#             from all_history a
-#             left join (
-#                 select * from (
-#                     select region, hotel_name, crawl_time, min(twd_price) as min_twd_price from all_history
-#                     where date(crawl_time) >= DATE(DATE_SUB(CONVERT_TZ(CURDATE(), 'UTC', '+8:00'), INTERVAL 6 DAY))
-#                     group by 1,2
-#                     having min_twd_price is not null
-#                 ) hp
-#                 where date(hp.crawl_time) = "{date}"
-#             ) w on a.hotel_name = w.hotel_name and a.region = w.region"""
-#     ]
-
-#     # add region, ... filters into query
-#     where_clause = ['where date(a.crawl_time) = "{date}"']
-#     if region:
-#         where_clause.append(f"and a.region = '{region}'")
-
-#     # if other attributes...
-
-#     final_where_clause = " ".join(where_clause) + "\n"
-
-#     query.append(final_where_clause)
-
-#     query.append("""group by 1,2,3
-#                     having min_twd_price is not null""")
+def get_daily_all_hotels_with_week_best_price(filters:dict):
     
-#     # cursor.execute(query)
+    date = filters.get("date")
+    region = filters.get("region")
+    min_price = filters.get("min_price")
+    max_price = filters.get("max_price")
+    is_week_best_price = filters.get("is_week_best_price")
 
-#     #
+# where date(crawl_time) >= DATE(DATE_SUB(CONVERT_TZ(CURDATE(), 'UTC', '+8:00'), INTERVAL 6 DAY))
+
     with con.cursor() as cursor:
-        if region == "all" or region is None:
-            SQL_get_daily_all_hotels_with_week_best_price = f"""
-                select a.region, a.hotel_name, a.crawl_time, min(a.twd_price) as min_twd_price
-                    ,case when w.hotel_name is null then 0 else 1 end as is_week_best_price 
-                    from all_history a
-                    left join (
-                        select * from (
-                            select region, hotel_name, crawl_time, min(twd_price) as min_twd_price from all_history
-                            where date(crawl_time) >= DATE(DATE_SUB(CONVERT_TZ(CURDATE(), 'UTC', '+8:00'), INTERVAL 6 DAY))
-                            group by 1,2
-                            having min_twd_price is not null
-                        ) hp
-                        where date(hp.crawl_time) = "{date}"
-                    ) w on a.hotel_name = w.hotel_name and a.region = w.region
-                    where date(a.crawl_time) = "{date}" 
-                    group by 1,2,3
+        query = f"""
+            select a.region, a.hotel_name, a.crawl_time, min(a.twd_price) as min_twd_price,
+                case when w.hotel_name is null then 0 else 1 end as is_week_best_price 
+            from all_history a
+            left join (
+                select * from (
+                    select region, hotel_name, crawl_time, min(twd_price) as min_twd_price from all_history
+                    group by 1,2
                     having min_twd_price is not null
-            """
-        else:
-            SQL_get_daily_all_hotels_with_week_best_price = f"""
-                select a.region, a.hotel_name, a.crawl_time, min(a.twd_price) as min_twd_price
-                    ,case when w.hotel_name is null then 0 else 1 end as is_week_best_price 
-                    from all_history a
-                    left join (
-                        select * from (
-                            select region, hotel_name, crawl_time, min(twd_price) as min_twd_price from all_history
-                            where date(crawl_time) >= DATE(DATE_SUB(CONVERT_TZ(CURDATE(), 'UTC', '+8:00'), INTERVAL 6 DAY))
-                            group by 1,2
-                            having min_twd_price is not null
-                        ) hp
-                        where date(hp.crawl_time) = "{date}"
-                    ) w on a.hotel_name = w.hotel_name and a.region = w.region
-                    where date(a.crawl_time) = "{date}" and a.region = '{region}'
-                    group by 1,2,3
-                    having min_twd_price is not null
-            """
-        cursor.execute(SQL_get_daily_all_hotels_with_week_best_price)
+                ) hp
+                where date(hp.crawl_time) = '{date}'
+            ) w on a.hotel_name = w.hotel_name and a.region = w.region
+            WHERE date(a.crawl_time) = '{date}'
+        """
+        if region and region != "all":
+            query += f"\n  AND a.region = '{region}'"
+
+        query += "\nGROUP BY 1, 2, 3\nHAVING min_twd_price IS NOT NULL"
+        if min_price:
+            query += f"\n  AND min_twd_price >= {min_price}"
+        if max_price:
+            query += f"\n  AND min_twd_price <= {max_price}"
+        if is_week_best_price:
+            query += f"\n  AND is_week_best_price = {is_week_best_price}"
+
+        # if region == "all" or region is None:
+        #     SQL_get_daily_all_hotels_with_week_best_price = f"""
+        #         select a.region, a.hotel_name, a.crawl_time, min(a.twd_price) as min_twd_price
+        #             ,case when w.hotel_name is null then 0 else 1 end as is_week_best_price 
+        #             from all_history a
+        #             left join (
+        #                 select * from (
+        #                     select region, hotel_name, crawl_time, min(twd_price) as min_twd_price from all_history
+        #                     where date(crawl_time) >= DATE(DATE_SUB(CONVERT_TZ(CURDATE(), 'UTC', '+8:00'), INTERVAL 6 DAY))
+        #                     group by 1,2
+        #                     having min_twd_price is not null
+        #                 ) hp
+        #                 where date(hp.crawl_time) = "{date}"
+        #             ) w on a.hotel_name = w.hotel_name and a.region = w.region
+        #             where date(a.crawl_time) = "{date}" 
+        #             group by 1,2,3
+        #             having min_twd_price is not null
+        #     """
+       
+        cursor.execute(query)
         result = cursor.fetchall()
         return result
 
@@ -199,6 +175,8 @@ def get_request_hotel_with_best_price(date, hotel_name):
         cursor.execute(SQL_get_request_hotel_with_best_price)
         result = cursor.fetchall()
         return result
+
+
 def get_request_daily_cheapest_price():
     """
     拿取使用者追蹤飯店每日最便宜的價格和該價格的agency通知使用者
