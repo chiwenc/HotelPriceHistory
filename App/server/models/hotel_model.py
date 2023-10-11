@@ -75,7 +75,7 @@ def get_week_best_price(region):
                     group by 1,2
                     having min_twd_price is not null
                 ) hp
-                where date(crawl_time) = "2023-10-07"
+                where date(crawl_time) = "2023-10-11"
             """
         else:
             SQL_search_week_best_price = f"""
@@ -85,7 +85,7 @@ def get_week_best_price(region):
                     group by 1,2
                     having min_twd_price is not null
                 ) hp
-                where date(crawl_time) = "2023-10-07"
+                where date(crawl_time) = "2023-10-11"
                 and region = '{region}'
             """
         cursor.execute(SQL_search_week_best_price)
