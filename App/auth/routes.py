@@ -46,7 +46,7 @@ def index():
     paging = int(paging)
 
     filters = {
-        "date":"2023-10-10",
+        "date":"2023-10-11",
         "region":request.values.get('region'),
         "min_price":request.values.get('min_price'),
         "max_price":request.values.get('max_price'),
@@ -59,7 +59,7 @@ def index():
 @bp.route("/api/v1/hotel/search_price/", methods=['GET','POST'])
 def get_search_hotel_history_price():
    hotel_name = request.values.get("hotel_name")
-   hotels = get_request_hotel_with_best_price("2023-10-10", hotel_name)
+   hotels = get_request_hotel_with_best_price("2023-10-11", hotel_name)
    chart_data = search_price_history_line_chart(hotel_name)
    return render_template("search_hotel.html", hotels=hotels, chart_data=chart_data)
 
@@ -171,7 +171,7 @@ def week_best_price():
 @bp.route("/api/v1/hotel/get_request_hotel_info")
 def search_request_hotel():
     hotel_name = request.values.get("hotel_name")
-    hotel_data = get_request_hotel_with_best_price("2023-10-07",hotel_name)
+    hotel_data = get_request_hotel_with_best_price("2023-10-11",hotel_name)
     chart_data = search_price_history_line_chart(hotel_name)
     return {
         "hotel_data": hotel_data[0],
