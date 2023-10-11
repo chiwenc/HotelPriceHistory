@@ -10,8 +10,7 @@
     <div class="container">
         <div class="jumbotron">
             <h1 class="display-4">親愛的 {{ user_name }} 先生/女士,</h1>
-            <p class="lead">我們很高興地通知您，以下是一些提供最新低價的旅館：</p>
-            <!-- 使用循環列出多家旅館的資訊 -->
+            <p class="lead">我們很高興地通知您，您所追蹤的飯店有最新低價：</p>
             <ul class="list-group">
                 {% for index, row in filter_user_data.iterrows() %}
                     <li class="list-group-item">
