@@ -9,6 +9,7 @@ from App.auth import bp
 from App.models import User
 from flask_login import UserMixin
 from App import cache
+import pandas as pd
 
 PAGE_SIZE = 10
 
